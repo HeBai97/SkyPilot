@@ -55,13 +55,14 @@ dependencies {
     implementation deps.mikepenzIconicsCore
     implementation deps.mikepenzIonicons
     implementation deps.material
-    implementation deps.mapboxAccount
 
     api deps.maplibreTurf
     api deps.maplibreSdk
-    api deps.mapboxSdk
-    api deps.mapboxTurfSdk
-
+//    api deps.mapboxgeojson
+//    api deps.mapboxservices
+//    api deps.mapboxturf
+//    api deps.mapboxcore
+//    api deps.mapboxsdk
 
     api deps.playservicesplaces
     api deps.playservicesmaps

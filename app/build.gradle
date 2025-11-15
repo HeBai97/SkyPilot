@@ -88,7 +88,9 @@ android {
 }
 
 dependencies {
-    implementation project(":uxsdk")
+//    implementation project(":uxsdk")
+    implementation project(":android-sdk-v5-uxsdk")
+
 
     // DJI SDK 依赖 - 确保使用 implementation 而不是 compileOnly
     def SDK_VERSION = rootProject.ext.SDK_VERSION

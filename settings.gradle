@@ -7,6 +7,9 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -15,10 +18,12 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+        }
         mavenCentral()
     }
 }
 rootProject.name = "SkyPilot"
 include ':app'
-include ':uxsdk'
-project(':uxsdk').projectDir = new File(rootProject.projectDir, 'android-sdk-v5-uxsdk')
+include ':android-sdk-v5-uxsdk'

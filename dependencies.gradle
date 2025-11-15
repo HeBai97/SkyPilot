@@ -27,13 +27,15 @@ ext {
     deps.maplibreTurf = 'org.maplibre.gl:android-sdk-turf:5.9.1'
     deps.maplibreSdk = 'org.maplibre.gl:android-sdk:11.8.6'
     deps.maplibreGeoJson = 'org.maplibre.gl:android-sdk-geojson:6.0.1'
-    deps.mapboxSdk = 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.2.0'
-    deps.mapboxAccount = 'com.mapbox.mapboxsdk:mapbox-android-accounts:0.7.0'
-    deps.mapboxTurfSdk = 'com.mapbox.mapboxsdk:mapbox-sdk-turf:5.8.0'
     deps.playservicesplaces = 'com.google.android.gms:play-services-places:17.1.0'
     deps.playservicesmaps = 'com.google.android.gms:play-services-maps:18.2.0'
     deps.playserviceslocation = 'com.google.android.gms:play-services-location:21.2.0'
     deps.playservicesbase = 'com.google.android.gms:play-services-base:18.5.0'
+//    deps.mapboxgeojson = 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:7.8.0'
+//    deps.mapboxservices = 'com.mapbox.mapboxsdk:mapbox-sdk-services:7.8.0'
+//    deps.mapboxturf = 'com.mapbox.mapboxsdk:mapbox-sdk-turf:7.8.0'
+//    deps.mapboxcore = 'com.mapbox.mapboxsdk:mapbox-sdk-core:7.8.0'
+//    deps.mapboxsdk = 'com.mapbox.extension:maps-compose-ndk27:11.16.4'
 
     // Material / UI
     deps.lottie = 'com.airbnb.android:lottie:3.3.1'
