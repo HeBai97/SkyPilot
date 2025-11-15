@@ -31,11 +31,6 @@ ext {
     deps.playservicesmaps = 'com.google.android.gms:play-services-maps:18.2.0'
     deps.playserviceslocation = 'com.google.android.gms:play-services-location:21.2.0'
     deps.playservicesbase = 'com.google.android.gms:play-services-base:18.5.0'
-//    deps.mapboxgeojson = 'com.mapbox.mapboxsdk:mapbox-sdk-geojson:7.8.0'
-//    deps.mapboxservices = 'com.mapbox.mapboxsdk:mapbox-sdk-services:7.8.0'
-//    deps.mapboxturf = 'com.mapbox.mapboxsdk:mapbox-sdk-turf:7.8.0'
-//    deps.mapboxcore = 'com.mapbox.mapboxsdk:mapbox-sdk-core:7.8.0'
-//    deps.mapboxsdk = 'com.mapbox.extension:maps-compose-ndk27:11.16.4'
 
     // Material / UI
     deps.lottie = 'com.airbnb.android:lottie:3.3.1'

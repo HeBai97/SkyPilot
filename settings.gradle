@@ -7,9 +7,6 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        maven {
-            url 'https://api.mapbox.com/downloads/v2/releases/maven'
-        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -17,11 +14,8 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        google()
-        maven {
-            url 'https://api.mapbox.com/downloads/v2/releases/maven'
-        }
         mavenCentral()
+        google()
     }
 }
 rootProject.name = "SkyPilot"
