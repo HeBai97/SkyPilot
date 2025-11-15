@@ -41,25 +41,25 @@ import dji.v5.ux.mapkit.maplibre.annotations.MMarkerCircle;
 import dji.v5.ux.mapkit.maplibre.annotations.MPolygon;
 import dji.v5.ux.mapkit.maplibre.annotations.MSymbolLayerMarker;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import com.mapbox.mapboxsdk.annotations.Icon;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.annotations.Polygon;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
-import com.mapbox.mapboxsdk.camera.CameraUpdate;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.maps.MapView;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.Projection;
-import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.layers.CircleLayer;
-import com.mapbox.mapboxsdk.style.layers.FillLayer;
-import com.mapbox.mapboxsdk.style.layers.Layer;
-import com.mapbox.mapboxsdk.style.layers.LineLayer;
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapView;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.Projection;
+import org.maplibre.android.maps.Style;
+import org.maplibre.android.style.layers.CircleLayer;
+import org.maplibre.android.style.layers.FillLayer;
+import org.maplibre.android.style.layers.Layer;
+import org.maplibre.android.style.layers.LineLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.layers.SymbolLayer;
+import org.maplibre.android.style.sources.GeoJsonSource;
+import org.maplibre.android.annotations.Icon;
+import org.maplibre.android.annotations.IconFactory;
+import org.maplibre.android.annotations.Marker;
+import org.maplibre.android.annotations.MarkerOptions;
+import org.maplibre.android.annotations.Polygon;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.camera.CameraUpdate;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,12 +73,12 @@ import java.util.Set;
  * Created by joeyang on 10/15/17.
  */
 public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
-        MapboxMap.OnMarkerClickListener,
-        MapboxMap.OnMapClickListener,
-        MapboxMap.OnInfoWindowClickListener,
+        MapLibreMap.OnMarkerClickListener,
+        MapLibreMap.OnMapClickListener,
+        MapLibreMap.OnInfoWindowClickListener,
         Style.OnStyleLoaded,
-        MapboxMap.OnCameraMoveListener,
-        MapboxMap.OnMapLongClickListener,
+        MapLibreMap.OnCameraMoveListener,
+        MapLibreMap.OnMapLongClickListener,
         View.OnTouchListener {
 
 
@@ -166,9 +166,9 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
     private Context context;
 
     /**
-     * 真正的 MapboxMap 实例
+     * 真正的 MapLibreMap 实例
      */
-    private MapboxMap mapboxMap;
+    private MapLibreMap mapLibreMap;
 
     /**
      * 影子marker和真正marker的map
@@ -292,17 +292,17 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
      */
    // private LinkedList<Pair<Integer, ? extends Layer>> markerZIndexLayerList = new LinkedList<>();
 
-    public MaplibreMapDelegate(MapboxMap mapboxMap, Context context, MapView view, Style style) {
+    public MaplibreMapDelegate(MapLibreMap mapLibreMap, Context context, MapView view, Style style) {
         this.context = context;
-        this.mapboxMap = mapboxMap;
+        this.mapLibreMap = mapLibreMap;
         // this.mapView = view;
         this.style = style;
         view.setOnTouchListener(this);
-        mapboxMap.setOnMarkerClickListener(this);
-        mapboxMap.addOnMapClickListener(this);
-        mapboxMap.setOnInfoWindowClickListener(this);
-        mapboxMap.addOnMapLongClickListener(this);
-        mapboxMap.addOnCameraMoveListener(this);
+        mapLibreMap.setOnMarkerClickListener(this);
+        mapLibreMap.addOnMapClickListener(this);
+        mapLibreMap.setOnInfoWindowClickListener(this);
+        mapLibreMap.addOnMapLongClickListener(this);
+        mapLibreMap.addOnCameraMoveListener(this);
 
         markers = new HashMap<>();
         polylines = new HashSet<>();
@@ -380,7 +380,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             }
 
 //          for (String bitmap : markerBitmaps) {
-//              mapboxMap.removeImage(bitmap);
+//              mapLibreMap.removeImage(bitmap);
 //          }
         }
 
@@ -415,7 +415,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             Icon icon = IconFactory.getInstance(context).fromBitmap(shadowBitmap);
             options.icon(icon);
         }
-        Marker shadowMarker = mapboxMap.addMarker(options);
+        Marker shadowMarker = mapLibreMap.addMarker(options);
 
         // 构建 SymbolLayer
         String markerLayerId = genMarkerLayerId();
@@ -427,7 +427,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
         if (style.isFullyLoaded()) {
             style.addSource(markerSource);
         }
-        DJIMarker djiMarker = new MSymbolLayerMarker(this, mapboxMap, markerSource, markerSymbolLayer, shadowMarker, context, markerOptions);
+        DJIMarker djiMarker = new MSymbolLayerMarker(this, mapLibreMap, markerSource, markerSymbolLayer, shadowMarker, context, markerOptions);
         djiMarker.setPosition(latLng);
         djiMarker.setRotation(markerOptions.getRotation());
 
@@ -458,7 +458,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
 
     @Override
     public Object getMap() {
-        return mapboxMap;
+        return mapLibreMap;
     }
 
     private Bitmap createTransparentBitmap(Bitmap src) {
@@ -609,19 +609,19 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
 
     @Override
     public DJICameraPosition getCameraPosition() {
-        CameraPosition p = mapboxMap.getCameraPosition();
+        CameraPosition p = mapLibreMap.getCameraPosition();
         return MaplibreUtils.fromCameraPosition(p);
     }
 
     @Override
     public void animateCamera(DJICameraUpdate cameraUpdate) {
         CameraUpdate update = MaplibreUtils.fromDJICameraUpdate(cameraUpdate);
-        mapboxMap.animateCamera(update);
+        mapLibreMap.animateCamera(update);
     }
 
     @Override
     public void onCameraMove() {
-        final CameraPosition p = mapboxMap.getCameraPosition();
+        final CameraPosition p = mapLibreMap.getCameraPosition();
         DJICameraPosition cameraPosition = MaplibreUtils.fromCameraPosition(p);
         onCameraChange(cameraPosition);
     }
@@ -629,13 +629,13 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
     @Override
     public void moveCamera(DJICameraUpdate cameraUpdate) {
         CameraUpdate update = MaplibreUtils.fromDJICameraUpdate(cameraUpdate);
-        mapboxMap.moveCamera(update);
+        mapLibreMap.moveCamera(update);
     }
 
     //  10/18/17 这里还没有实现
     @Override
     public void setInfoWindowAdapter(final InfoWindowAdapter adapter) {
-        mapboxMap.setInfoWindowAdapter(marker -> {
+        mapLibreMap.setInfoWindowAdapter(marker -> {
             if (markers.containsKey(marker)) {
                 final DJIMarker realMarker = markers.get(marker);
                 return adapter.getInfoWindow(realMarker);
@@ -652,7 +652,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
 
     @Override
     public boolean onMapLongClick(@NonNull LatLng point) {
-        Projection projection = mapboxMap.getProjection();
+        Projection projection = mapLibreMap.getProjection();
         PointF longClickScreenPoint = projection.toScreenLocation(point);
 
         float minDistanceOfPixel = 60;
@@ -703,7 +703,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             if (action == MotionEvent.ACTION_MOVE) {
                 float x = motionEvent.getX();
                 float y = motionEvent.getY();
-                LatLng latLng = mapboxMap.getProjection().fromScreenLocation(new PointF(x, y));
+                LatLng latLng = mapLibreMap.getProjection().fromScreenLocation(new PointF(x, y));
 
                 currentSelectedMarker.setPosition(latLng);
                 DJIMarker djiMarker = markers.get(currentSelectedMarker);
@@ -730,14 +730,14 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
         clearSourcesAndLayers();
         switch (type) {
             case DJIMap.MAP_TYPE_SATELLITE:
-                mapboxMap.setStyle(MaplibreStyle.SATELLITE, this);
+                mapLibreMap.setStyle(MaplibreStyle.SATELLITE, this);
                 break;
             case DJIMap.MAP_TYPE_HYBRID:
-                mapboxMap.setStyle(MaplibreStyle.SATELLITE_STREETS, this);
+                mapLibreMap.setStyle(MaplibreStyle.SATELLITE_STREETS, this);
                 break;
             case DJIMap.MAP_TYPE_NORMAL:
             default:
-                mapboxMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
+                mapLibreMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
         }
     }
 
@@ -747,16 +747,16 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
         clearSourcesAndLayers();
         switch (type) {
             case NORMAL:
-                mapboxMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
+                mapLibreMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
                 break;
             case SATELLITE:
-                mapboxMap.setStyle(MaplibreStyle.SATELLITE, this);
+                mapLibreMap.setStyle(MaplibreStyle.SATELLITE, this);
                 break;
             case HYBRID:
-                mapboxMap.setStyle(MaplibreStyle.SATELLITE_STREETS, this);
+                mapLibreMap.setStyle(MaplibreStyle.SATELLITE_STREETS, this);
                 break;
             default:
-                mapboxMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
+                mapLibreMap.setStyle(MaplibreStyle.MAPBOX_STREETS, this);
         }
     }
 
@@ -821,7 +821,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             );
         }
 
-        DJIPolyline polyline = new MLineLayerPolyline(this, mapboxMap, lineLayer, lineSource, options);
+        DJIPolyline polyline = new MLineLayerPolyline(this, mapLibreMap, lineLayer, lineSource, options);
         polyline.setPoints(options.getPoints());
         polyline.setColor(options.getColor());
         polyline.setWidth(options.getWidth());
@@ -841,8 +841,8 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
     @Nullable
     @Override
     public DJIPolygon addPolygon(DJIPolygonOptions options) {
-        Polygon polygon = mapboxMap.addPolygon(MaplibreUtils.fromDJIPolygonOptions(options));
-        return new MPolygon(polygon, mapboxMap, options);
+        Polygon polygon = mapLibreMap.addPolygon(MaplibreUtils.fromDJIPolygonOptions(options));
+        return new MPolygon(polygon, mapLibreMap, options);
     }
 
     @Nullable
@@ -856,7 +856,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             style.addSource(markerCircleSource);
         }
 
-        DJICircle markerCircle = new MMarkerCircle(this, mapboxMap, markerCircleLayer, markerCircleSource, options);
+        DJICircle markerCircle = new MMarkerCircle(this, mapLibreMap, markerCircleLayer, markerCircleSource, options);
         markerCircle.setVisible(true);
         markerCircle.setCircle(options.getCenter(), options.getRadius());
         markerCircle.setFillColor(options.getFillColor());
@@ -881,7 +881,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
             style.addSource(singleCircleSource);
         }
 
-        DJICircle singleCircle = new MCircle(this, mapboxMap, singleCircleSymboLayer, singleCircleSource, options);
+        DJICircle singleCircle = new MCircle(this, mapLibreMap, singleCircleSymboLayer, singleCircleSource, options);
         singleCircle.setVisible(true);
         singleCircle.setCircle(options.getCenter(), options.getRadius());
         singleCircle.setFillColor(options.getFillColor());
@@ -912,7 +912,7 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
         if (style.isFullyLoaded()) {
             style.addSource(groupCircleSource);
         }
-        DJIGroupCircle groupCircle = new MGroupCircle(this, mapboxMap, groupCircleSymboLayer, groupCircleSource, options);
+        DJIGroupCircle groupCircle = new MGroupCircle(this, mapLibreMap, groupCircleSymboLayer, groupCircleSource, options);
         groupCircle.setCircles(options.getCenters(), options.getRadius());
         groupCircle.setFillColor(options.getFillColor());
         groupCircle.setStrokeColor(options.getStrokeColor());
@@ -927,25 +927,25 @@ public class MaplibreMapDelegate extends DJIBaseMap implements DJIMap,
 
     @Override
     public DJIUiSettings getUiSettings() {
-        return new MUiSettings(mapboxMap.getUiSettings());
+        return new MUiSettings(mapLibreMap.getUiSettings());
     }
 
     @Override
     public void snapshot(final MapScreenShotListener callback) {
-        mapboxMap.snapshot(snapshot -> callback.onMapScreenShot(snapshot));
+        mapLibreMap.snapshot(snapshot -> callback.onMapScreenShot(snapshot));
     }
 
     @Override
     public DJIProjection getProjection() {
-        return new MProjection(mapboxMap.getProjection());
+        return new MProjection(mapLibreMap.getProjection());
     }
 
     @Override
     public void clear() {
         removeAllOnCameraChangeListeners();
         removeAllOnMarkerClickListener();
-        mapboxMap.clear();
-        mapboxMap.setInfoWindowAdapter(null);
+        mapLibreMap.clear();
+        mapLibreMap.setInfoWindowAdapter(null);
     }
 
     @Override

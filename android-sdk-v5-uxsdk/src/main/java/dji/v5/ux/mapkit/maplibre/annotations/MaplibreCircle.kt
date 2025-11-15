@@ -6,22 +6,22 @@ import dji.v5.ux.mapkit.core.models.annotations.DJICircle
 
 import dji.v5.ux.mapkit.core.utils.DJIMapkitLog
 import dji.v5.ux.mapkit.maplibre.utils.*
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
-import com.mapbox.geojson.Polygon
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.FillLayer
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
-import com.mapbox.turf.TurfConstants
-import com.mapbox.turf.TurfMeta
-import com.mapbox.turf.TurfTransformation
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
+import org.maplibre.geojson.Polygon
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.turf.TurfConstants
+import org.maplibre.turf.TurfMeta
+import org.maplibre.turf.TurfTransformation
 import dji.v5.ux.mapkit.core.models.annotations.DJICircleOptions
 
-class MaplibreCircle(private val mapboxMap: MapboxMap,
+class MaplibreCircle(private val maplibreMap: MapLibreMap,
                      private val options: DJICircleOptions,
                      private val onRemoveCircle: (zindex: Int, circle: MaplibreCircle) -> Boolean,
                      private val onAddCircle: (zindex: Int, polyline: MaplibreCircle) -> Unit
@@ -56,7 +56,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
 
     init {
         DJIMapkitLog.i(TAG, "init")
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (it.isFullyLoaded) {
                 setUpCircleSource(it)
                 setUpBorderSource(it)
@@ -66,7 +66,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
 
     override fun remove() {
         DJIMapkitLog.i(TAG, "remove ${circleLayer.id}, ${borderLayer.id}")
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (!onRemoveCircle(options.zIndex.toInt(), this)) {
                 DJIMapkitLog.e(TAG, "remove circle $this fail")
             }
@@ -108,7 +108,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
     }
 
     internal fun clearCircle() {
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             DJIMapkitLog.i(TAG, "clear circle")
             it.removeLayerAndLog(circleLayer)
             it.removeSourceAndLog(source)
@@ -119,7 +119,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
 
     internal fun restore() {
         DJIMapkitLog.i(TAG, "restore")
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             it.addSourceAndLog(source)
             it.addSourceAndLog(borderSource)
         }
@@ -139,7 +139,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
     }
 
     override fun toString(): String {
-        return "MapboxCircle { circle layer id ${circleLayer.id}, circle source id ${source.id}, " +
+        return "MaplibreCircle { circle layer id ${circleLayer.id}, circle source id ${source.id}, " +
                 "border layer id ${borderLayer.id}, border source id ${borderSource.id}}"
     }
 
@@ -175,7 +175,7 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
     }
 
     override fun setZIndex(zIndex: Float) {
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             onRemoveCircle(options.zIndex.toInt(), this)
             options.zIndex(zIndex)
             onAddCircle(options.zIndex.toInt(), this)
@@ -183,6 +183,6 @@ class MaplibreCircle(private val mapboxMap: MapboxMap,
     }
 
     companion object {
-        private const val TAG = "MapboxCircle"
+        private const val TAG = "MaplibreCircle"
     }
 }

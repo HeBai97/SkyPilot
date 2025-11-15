@@ -95,7 +95,7 @@ dependencies {
     // DJI SDK 依赖 - 确保使用 implementation 而不是 compileOnly
     def SDK_VERSION = rootProject.ext.SDK_VERSION
     implementation "com.dji:dji-sdk-v5-aircraft:$SDK_VERSION"
-    implementation "com.dji:dji-sdk-v5-networkImp:$SDK_VERSION"
+    compileOnly "com.dji:dji-sdk-v5-aircraft-provided:$SDK_VERSION"
 
 
     implementation deps.appcompat
@@ -103,6 +103,7 @@ dependencies {
     implementation deps.constraintLayout
     implementation deps.multidex  // 添加 multidex 支持（DJI SDK 可能需要）
     implementation deps.lifecycleViewModel  // 用于 viewModelScope
+    implementation deps.lifecycleViewModelKtx
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

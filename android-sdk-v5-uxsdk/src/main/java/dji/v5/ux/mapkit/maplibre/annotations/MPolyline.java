@@ -4,9 +4,9 @@ import dji.v5.ux.mapkit.core.models.DJILatLng;
 import dji.v5.ux.mapkit.core.models.annotations.DJIPolyline;
 import dji.v5.ux.mapkit.core.models.annotations.DJIPolylineOptions;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import com.mapbox.mapboxsdk.annotations.Polyline;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
+import org.maplibre.android.annotations.Polyline;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,18 +18,18 @@ import java.util.List;
 public class MPolyline implements DJIPolyline {
 
     Polyline polyline;
-    DJIPolylineOptions mDJIPolylineOptions;
-    MapboxMap mapboxMap;
+    DJIPolylineOptions options;
+    MapLibreMap mapLibreMap;
 
-    public MPolyline(Polyline polyline, DJIPolylineOptions options, MapboxMap mapboxMap) {
+    public MPolyline(Polyline polyline, DJIPolylineOptions options, MapLibreMap mapLibreMap) {
         this.polyline = polyline;
-        this.mDJIPolylineOptions = options;
-        this.mapboxMap = mapboxMap;
+        this.options = options;
+        this.mapLibreMap = mapLibreMap;
     }
 
     @Override
     public void remove() {
-        mapboxMap.removePolyline(polyline);
+        mapLibreMap.removePolyline(polyline);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class MPolyline implements DJIPolyline {
     }
 
     public DJIPolylineOptions getOptions() {
-        return mDJIPolylineOptions;
+        return options;
     }
 
     /**

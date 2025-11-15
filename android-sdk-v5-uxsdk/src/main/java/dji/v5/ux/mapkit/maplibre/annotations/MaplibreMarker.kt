@@ -14,18 +14,18 @@ import dji.v5.ux.mapkit.core.models.annotations.DJIMarker
 import dji.v5.ux.mapkit.core.models.annotations.DJIMarkerOptions
 import dji.v5.ux.mapkit.core.utils.DJIMapkitLog
 import dji.v5.ux.mapkit.maplibre.utils.*
-import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.Property.ICON_ANCHOR_BOTTOM
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import org.maplibre.geojson.Point
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.SymbolLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
 import dji.v5.ux.R
+import org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM
 
 class MaplibreMarker(private val context: Context,
-                     private val mapboxMap: MapboxMap,
+                     private val maplibreMap: MapLibreMap,
                      private val options: DJIMarkerOptions,
                      private val onRemoveMarker: (zindex: Int, marker: MaplibreMarker) -> Boolean
 ) : DJIMarker() {
@@ -74,7 +74,7 @@ class MaplibreMarker(private val context: Context,
 
     init {
         DJIMapkitLog.i(TAG, "init")
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (it.isFullyLoaded) {
                 setUpSource(it)
                 setUpMarkerIcon(it, descriptor)
@@ -92,7 +92,7 @@ class MaplibreMarker(private val context: Context,
     }
 
     override fun setIcon(bitmap: DJIBitmapDescriptor?) {
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (it.isFullyLoaded) setUpMarkerIcon(it, bitmap)
         }
     }
@@ -139,7 +139,7 @@ class MaplibreMarker(private val context: Context,
         infoWindow?.let {
             infoWindow = null
             destroyInfoWindowLayer()
-            mapboxMap.style?.removeImage(infoWindowIconId)
+            maplibreMap.style?.removeImage(infoWindowIconId)
             it.onDestroy()
         }
     }
@@ -151,7 +151,7 @@ class MaplibreMarker(private val context: Context,
     override fun remove() {
         DJIMapkitLog.i(TAG, "remove this marker")
         hideInfoWindow()
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (!onRemoveMarker(options.zIndex, this)) {
                 DJIMapkitLog.e(TAG, "remove marker $this fail")
             }
@@ -179,7 +179,7 @@ class MaplibreMarker(private val context: Context,
             updateInfoWindow(it)
             createInfoWindowLayer()
         }
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             setUpMarkerIcon(it, descriptor)
             it.addSourceAndLog(source)
         }
@@ -192,9 +192,9 @@ class MaplibreMarker(private val context: Context,
         infoWindow?.let {
             DJIMapkitLog.i(TAG, "clear info window $infoWindowLayerId")
             destroyInfoWindowLayer()
-            mapboxMap.style?.removeImage(infoWindowIconId)
+            maplibreMap.style?.removeImage(infoWindowIconId)
         }
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             DJIMapkitLog.i(TAG, "clear marker")
             it.removeLayerAndLog(markerLayer)
             it.removeSourceAndLog(source)
@@ -203,11 +203,11 @@ class MaplibreMarker(private val context: Context,
     }
 
     private fun createInfoWindowLayer() {
-        mapboxMap.style?.addLayerAndLog(infoWindowLayer)
+        maplibreMap.style?.addLayerAndLog(infoWindowLayer)
     }
 
     private fun destroyInfoWindowLayer() {
-        mapboxMap.style?.removeLayerAndLog(infoWindowLayer)
+        maplibreMap.style?.removeLayerAndLog(infoWindowLayer)
     }
 
     private fun generateInfoWindowBitmap(infoWindow: View): Bitmap {
@@ -241,7 +241,7 @@ class MaplibreMarker(private val context: Context,
     private fun updateInfoWindow(infoWindow: DJIInfoWindow?) {
         infoWindow?.let {
             val bitmap = generateInfoWindowBitmap(it as View)
-            mapboxMap.style?.run {
+            maplibreMap.style?.run {
                 if (isFullyLoaded) {
                     removeImage(infoWindowIconId)
                     addImage(infoWindowIconId, bitmap)

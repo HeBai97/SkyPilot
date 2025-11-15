@@ -6,16 +6,16 @@ import dji.v5.ux.mapkit.core.models.annotations.DJIPolyline
 import dji.v5.ux.mapkit.core.models.annotations.DJIPolylineOptions
 import dji.v5.ux.mapkit.core.utils.DJIMapkitLog
 import dji.v5.ux.mapkit.maplibre.utils.*
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.LineLayer
-import com.mapbox.mapboxsdk.style.layers.Property
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.sources.GeoJsonSource
 
-class MaplibrePolyline(private val mapboxMap: MapboxMap,
+class MaplibrePolyline(private val maplibreMap: MapLibreMap,
                        val options: DJIPolylineOptions,
                        private val onRemovePolyline: (zindex: Int, polyline: MaplibrePolyline) -> Boolean,
                        private val onAddPolyline: (zindex: Int, polyline: MaplibrePolyline) -> Unit
@@ -37,7 +37,7 @@ class MaplibrePolyline(private val mapboxMap: MapboxMap,
 
     init {
         DJIMapkitLog.i(TAG, "init")
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             if (it.isFullyLoaded) {
                 setUpPolylineSource(it)
             }
@@ -46,7 +46,7 @@ class MaplibrePolyline(private val mapboxMap: MapboxMap,
 
     override fun remove() {
         DJIMapkitLog.i(TAG, "remove")
-        mapboxMap.style?.let { style ->
+        maplibreMap.style?.let { style ->
             if (!onRemovePolyline(options.zIndex.toInt(), this)) {
                 DJIMapkitLog.e(TAG, "remove polyline $this fail")
             }
@@ -85,7 +85,7 @@ class MaplibrePolyline(private val mapboxMap: MapboxMap,
 
     internal fun clear() {
         DJIMapkitLog.i(TAG, "clear")
-        mapboxMap.style?.let { style ->
+        maplibreMap.style?.let { style ->
             style.removeLayerAndLog(polylineLayer)
             style.removeSourceAndLog(source)
         }
@@ -93,7 +93,7 @@ class MaplibrePolyline(private val mapboxMap: MapboxMap,
 
     internal fun restore() {
         DJIMapkitLog.i(TAG, "restore")
-        mapboxMap.style?.addSourceAndLog(source)
+        maplibreMap.style?.addSourceAndLog(source)
     }
 
     private fun setUpPolylineSource(style: Style) {
@@ -105,7 +105,7 @@ class MaplibrePolyline(private val mapboxMap: MapboxMap,
     }
 
     override fun setZIndex(zIndex: Float) {
-        mapboxMap.style?.let {
+        maplibreMap.style?.let {
             onRemovePolyline(options.zIndex.toInt(), this)
             options.zIndex(zIndex)
             onAddPolyline(options.zIndex.toInt(), this)

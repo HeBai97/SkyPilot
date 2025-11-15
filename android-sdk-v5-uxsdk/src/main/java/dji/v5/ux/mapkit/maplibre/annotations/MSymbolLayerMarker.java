@@ -12,22 +12,22 @@ import dji.v5.ux.mapkit.core.models.annotations.DJIMarker;
 import dji.v5.ux.mapkit.core.models.annotations.DJIMarkerOptions;
 import dji.v5.ux.mapkit.maplibre.map.MaplibreMapDelegate;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import com.mapbox.geojson.Point;
-import com.mapbox.mapboxsdk.annotations.Icon;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.style.layers.Property;
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-import com.mapbox.mapboxsdk.style.layers.PropertyValue;
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import org.maplibre.geojson.Point;
+import org.maplibre.android.annotations.Icon;
+import org.maplibre.android.annotations.Marker;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.style.layers.Property;
+import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.layers.PropertyValue;
+import org.maplibre.android.style.layers.SymbolLayer;
+import org.maplibre.android.style.sources.GeoJsonSource;
 
 /**
  * Created by joeyang on 11/5/17.
  */
 public class MSymbolLayerMarker extends DJIMarker {
 
-    private MapboxMap mapboxMap;
+    private MapLibreMap mapLibreMap;
     private GeoJsonSource source;
     private SymbolLayer symbolLayer;
     private Context context;
@@ -53,8 +53,8 @@ public class MSymbolLayerMarker extends DJIMarker {
 
     private DJIMarkerOptions markerOptions;
 
-    public MSymbolLayerMarker(MaplibreMapDelegate maplibreMapDelegate, MapboxMap mapboxMap, GeoJsonSource geoJsonSource, SymbolLayer symbolLayer, Marker shadowMarker, Context context, DJIMarkerOptions markerOptions) {
-        this.mapboxMap = mapboxMap;
+    public MSymbolLayerMarker(MaplibreMapDelegate maplibreMapDelegate, MapLibreMap mapLibreMap, GeoJsonSource geoJsonSource, SymbolLayer symbolLayer, Marker shadowMarker, Context context, DJIMarkerOptions markerOptions) {
+        this.mapLibreMap = mapLibreMap;
         this.source = geoJsonSource;
         this.symbolLayer = symbolLayer;
         this.context = context;
@@ -70,7 +70,7 @@ public class MSymbolLayerMarker extends DJIMarker {
         setPosition(positionCache);
 
         symbolLayer = new SymbolLayer(layerId, sourceId);
-        mapboxMap.getStyle().addSource(source);
+        mapLibreMap.getStyle().addSource(source);
 
         setIcon(bitmapDescriptor);
         setRotation(markerOptions.getRotation());
@@ -78,7 +78,7 @@ public class MSymbolLayerMarker extends DJIMarker {
         setAnchor(markerOptions.getAnchorU(), markerOptions.getAnchorV());
         setVisible(this.visibleCache); // 地图加载完成后，设置visible
         maplibreMapDelegate.updateLayerByZIndex(markerOptions.getZIndex(), symbolLayer);
-//        mapboxMap.addLayer(symbolLayer);
+//        mapLibreMap.addLayer(symbolLayer);
     }
 
     public Marker getShadowMarker() {
@@ -89,7 +89,7 @@ public class MSymbolLayerMarker extends DJIMarker {
      * 1. 将latLng转换成Position
      * 2. 将position转换成point
      * 3. 将point加入到source[GeoJsonSource]
-     * 3. 将source加入到 mapboxMap
+     * 3. 将source加入到 mapLibreMap
      * @param latLng
      */
     @Override
@@ -106,7 +106,7 @@ public class MSymbolLayerMarker extends DJIMarker {
         source.setGeoJson(point);
 
         shadowMarker.setPosition(MaplibreUtils.fromDJILatLng(latLng));
-//        // 将该位置加入到 mapboxMap
+//        // 将该位置加入到 mapLibreMap
     }
 
     /**
@@ -129,7 +129,7 @@ public class MSymbolLayerMarker extends DJIMarker {
     }
 
     /**
-     * 1. 将bitmap加入到 mapboxMap
+     * 1. 将bitmap加入到 mapLibreMap
      * 2. 将该 id 的 iconImage 加入到 symbolLayer
      * @param icon {@link DJIBitmapDescriptor}
      */
@@ -152,7 +152,7 @@ public class MSymbolLayerMarker extends DJIMarker {
             return;
         }
         if (bitmapDescriptor != null) {
-            mapboxMap.getStyle().removeImage(bitmapDescriptor.getId());
+            mapLibreMap.getStyle().removeImage(bitmapDescriptor.getId());
         } else {
             /* 需让每一个marker都持有一个新的bitmapDescr对象，否则在多个marker复用同一个DJIBitmapDescriptor资源时
              * 这些marker的bitmapDescr对象都指向了最新创建的那个
@@ -166,7 +166,7 @@ public class MSymbolLayerMarker extends DJIMarker {
         markerOptions.icon(bitmapDescriptor);
         Icon i = MaplibreUtils.fromDJIBitmapDescriptor(context, icon);
         bitmapDescriptor.updateBitmap(i.getBitmap());
-        mapboxMap.getStyle().addImage(icon.getId(), i.getBitmap());
+        mapLibreMap.getStyle().addImage(icon.getId(), i.getBitmap());
         symbolLayer.setProperties(PropertyFactory.iconImage(icon.getId()));
         symbolLayer.setProperties(PropertyFactory.iconAllowOverlap(true));
     }
@@ -190,8 +190,8 @@ public class MSymbolLayerMarker extends DJIMarker {
             Canvas canvas = new Canvas(translatedBitmap);
             canvas.drawColor(Color.TRANSPARENT);
             canvas.drawBitmap(bitmap, width - width * u, height - height * v, null);
-            mapboxMap.getStyle().removeImage(bitmapDescriptor.getId());
-            mapboxMap.getStyle().addImage(bitmapDescriptor.getId(), translatedBitmap);
+            mapLibreMap.getStyle().removeImage(bitmapDescriptor.getId());
+            mapLibreMap.getStyle().addImage(bitmapDescriptor.getId(), translatedBitmap);
             symbolLayer.setProperties(PropertyFactory.iconImage(bitmapDescriptor.getId()));
         }
     }
@@ -242,13 +242,13 @@ public class MSymbolLayerMarker extends DJIMarker {
 
     @Override
     public void showInfoWindow() {
-        mapboxMap.selectMarker(shadowMarker);
+        mapLibreMap.selectMarker(shadowMarker);
         isInfoWindowClosed = false;
     }
 
     @Override
     public void hideInfoWindow() {
-        mapboxMap.deselectMarker(shadowMarker);
+        mapLibreMap.deselectMarker(shadowMarker);
         isInfoWindowClosed = true;
     }
 
@@ -259,7 +259,7 @@ public class MSymbolLayerMarker extends DJIMarker {
 
     @Override
     public void remove() {
-        mapboxMap.removeMarker(shadowMarker);
+        mapLibreMap.removeMarker(shadowMarker);
         maplibreMapDelegate.onMarkerRemove(shadowMarker);
     }
 

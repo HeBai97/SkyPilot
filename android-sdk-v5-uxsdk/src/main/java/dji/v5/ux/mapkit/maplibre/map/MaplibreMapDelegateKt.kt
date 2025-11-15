@@ -18,21 +18,25 @@ import dji.v5.ux.mapkit.maplibre.annotations.MaplibreMarker
 import dji.v5.ux.mapkit.maplibre.annotations.MaplibrePolygon
 import dji.v5.ux.mapkit.maplibre.annotations.MaplibrePolyline
 import dji.v5.ux.mapkit.maplibre.utils.*
-import com.mapbox.geojson.Feature
-import com.mapbox.mapboxsdk.geometry.LatLng
-import com.mapbox.mapboxsdk.maps.MapboxMap
-import com.mapbox.mapboxsdk.maps.Style
-import com.mapbox.mapboxsdk.style.layers.Layer
+import dji.v5.ux.mapkit.core.models.DJILatLng
+import org.maplibre.geojson.Feature
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.Style
+import org.maplibre.android.maps.UiSettings
+import org.maplibre.android.maps.Projection
+import org.maplibre.android.style.layers.Layer
+import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils
 import dji.v5.utils.common.LogUtils
 import java.util.*
 import kotlin.collections.HashSet
 
-class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
+class MaplibreMapDelegateKt(private val maplibreMap: MapLibreMap,
                             private val context: Context,
                             mapView: View
 ) : DJIBaseMap() {
     init {
-        mapboxMap.apply {
+        maplibreMap.apply {
             addOnCameraMoveListener { handleCameraMove() }
             addOnMapClickListener { handleClickMap(it) }
             addOnMapLongClickListener { handleLongClickMap(it) }
@@ -78,10 +82,10 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
     private val sortedLayerWithZindex = TreeSet<LayerWithZindex>()
 
     override fun addMarker(markerOptions: DJIMarkerOptions): DJIMarker? {
-        if (mapboxMap.style == null) {
+        if (maplibreMap.style == null) {
             return null
         }
-        return MaplibreMarker(context, mapboxMap, markerOptions) { zindex, marker ->
+        return MaplibreMarker(context, maplibreMap, markerOptions) { zindex, marker ->
             val removeMarker = markerSet.removeAndLog(marker)
             val removeLayer = removeLayer(marker.markerLayer, zindex)
             removeLayer && removeMarker
@@ -100,16 +104,16 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
         TODO("Not yet implemented")
     }
 
-    override fun getMap() = mapboxMap
+    override fun getMap() = maplibreMap
 
     override fun animateCamera(cameraUpdate: DJICameraUpdate) {
-        mapboxMap.animateCamera(fromDJICameraUpdate(cameraUpdate, mapboxMap.cameraPosition))
+        maplibreMap.animateCamera(fromDJICameraUpdate(cameraUpdate, maplibreMap.cameraPosition))
     }
 
-    override fun getCameraPosition(): DJICameraPosition = fromCameraPosition(mapboxMap.cameraPosition)
+    override fun getCameraPosition(): DJICameraPosition = fromCameraPosition(maplibreMap.cameraPosition)
 
     override fun moveCamera(cameraUpdate: DJICameraUpdate) {
-        mapboxMap.moveCamera(fromDJICameraUpdate(cameraUpdate, mapboxMap.cameraPosition))
+        maplibreMap.moveCamera(fromDJICameraUpdate(cameraUpdate, maplibreMap.cameraPosition))
     }
 
     override fun setInfoWindowAdapter(adapter: DJIMap.InfoWindowAdapter) {
@@ -128,7 +132,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
         circleSet.forEach { it.clearCircle() }
         polygonSet.forEach { it.clear() }
         polylineSet.forEach { it.clear() }
-        mapboxMap.setStyle(fromMapType(type)) { restoreResources(it, listener) }
+        maplibreMap.setStyle(fromMapType(type)) { restoreResources(it, listener) }
     }
 
     private fun restoreResources(style: Style, listener: OnMapTypeLoadedListener?) {
@@ -152,10 +156,10 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
     }
 
     override fun addPolyline(options: DJIPolylineOptions) : MaplibrePolyline?  {
-       if (mapboxMap.style == null) {
+       if (maplibreMap.style == null) {
             return null
         }
-    return MaplibrePolyline(mapboxMap, options, { zindex, polyline ->
+    return MaplibrePolyline(maplibreMap, options, { zindex, polyline ->
         val removePolyline = polylineSet.removeAndLog(polyline)
         val removeLayer = removeLayer(polyline.polylineLayer, zindex)
         removePolyline && removeLayer
@@ -171,7 +175,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
         polylineSet.addAndLog(polyline)
     }
 
-    override fun addPolygon(options: DJIPolygonOptions) = MaplibrePolygon(mapboxMap, options) { zindex, polygon ->
+    override fun addPolygon(options: DJIPolygonOptions) = MaplibrePolygon(maplibreMap, options) { zindex, polygon ->
         val removePolygon = polygonSet.removeAndLog(polygon)
         val removeLayer = removeLayer(polygon.polygonLayer, zindex)
         val removeBorder = removeLayer(polygon.borderLayer, zindex)
@@ -183,7 +187,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
     }
 
     override fun addSingleCircle(options: DJICircleOptions): DJICircle {
-        return MaplibreCircle(mapboxMap, options, { zindex, circle ->
+        return MaplibreCircle(maplibreMap, options, { zindex, circle ->
             val removeCircle = circleSet.removeAndLog(circle)
             val removeLayer = removeLayer(circle.circleLayer, zindex)
             val removeBorder = removeLayer(circle.borderLayer, zindex)
@@ -201,17 +205,20 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
         circleSet.addAndLog(circle)
     }
 
-    override fun getUiSettings() = MUiSettings(mapboxMap.uiSettings)
-
-    override fun snapshot(callback: MapScreenShotListener) {
-        mapboxMap.snapshot { callback.onMapScreenShot(it) }
+    override fun getUiSettings(): MUiSettings {
+        val mUiSettings = MUiSettings(maplibreMap.uiSettings)
+        return mUiSettings
     }
 
-    override fun getProjection() = MProjection(mapboxMap.projection)
+    override fun snapshot(callback: MapScreenShotListener) {
+        maplibreMap.snapshot { callback.onMapScreenShot(it) }
+    }
+
+    override fun getProjection() = MProjection(maplibreMap.projection)
     override fun clear() {
         DJIMapkitLog.i(TAG, "clear")
         sortedLayerWithZindex.apply {
-            forEach { mapboxMap.style?.removeLayerAndLog(it.layer) }
+            forEach { maplibreMap.style?.removeLayerAndLog(it.layer) }
             clear()
         }
         markerSet.apply {
@@ -234,7 +241,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
 
     private fun addLayer(layer: Layer, zindex: Int) {
         DJIMapkitLog.i(TAG, "[addLayer] ready to add ${layer.id}, zindex $zindex")
-        mapboxMap.style?.let { style ->
+        maplibreMap.style?.let { style ->
             val layerWithZindex = LayerWithZindex(layer, zindex).also { sortedLayerWithZindex.addAndLog(it) }
             if (sortedLayerWithZindex.size == 1) {
                 style.addLayerAndLog(layer)
@@ -255,7 +262,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
 
     private fun handleClickIcon(screenPoint: PointF): Boolean {
         for (marker: MaplibreMarker in markerSet) {
-            val selectedMarkerFeatureList: List<Feature> = mapboxMap.queryRenderedFeatures(screenPoint, marker.markerLayerId)
+            val selectedMarkerFeatureList: List<Feature> = maplibreMap.queryRenderedFeatures(screenPoint, marker.markerLayerId)
             if (selectedMarkerFeatureList.isNotEmpty()) {
                 onMarkerClick(marker)
                 if (marker.isInfoWindowShown) marker.hideInfoWindow()
@@ -266,18 +273,22 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
         return false
     }
 
+    private fun convertLatLng(latLng: LatLng): DJILatLng {
+        return DJILatLng(latLng.latitude, latLng.longitude, latLng.altitude)
+    }
+
     private fun handleClickMap(latLng: LatLng): Boolean {
-        val isIconClick = handleClickIcon(mapboxMap.projection.toScreenLocation(latLng))
+        val isIconClick = handleClickIcon(maplibreMap.projection.toScreenLocation(latLng))
         if (!isIconClick) {
-            onMapClick(fromLatLng(latLng))
+            onMapClick(convertLatLng(latLng))
         }
         return true
     }
 
     private fun handleLongClickMap(latLng: LatLng): Boolean {
-        val pointF = mapboxMap.projection.toScreenLocation(latLng)
+        val pointF = maplibreMap.projection.toScreenLocation(latLng)
         for (marker: MaplibreMarker in markerSet) {
-            val selectedMarkerFeatureList: List<Feature> = mapboxMap.queryRenderedFeatures(pointF, marker.markerLayerId)
+            val selectedMarkerFeatureList: List<Feature> = maplibreMap.queryRenderedFeatures(pointF, marker.markerLayerId)
             if (selectedMarkerFeatureList.isNotEmpty()) {
                 if (marker.isDraggable) {
                     currentSelectedMarker = marker
@@ -287,7 +298,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
                 return false
             }
         }
-        onMapLongClick(fromLatLng(latLng))
+        onMapLongClick(convertLatLng(latLng))
         return true
     }
 
@@ -304,9 +315,9 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
             if (action == MotionEvent.ACTION_MOVE) {
                 val x = motionEvent.x
                 val y = motionEvent.y
-                val latLng = mapboxMap.projection.fromScreenLocation(PointF(x, y))
+                val latLng = maplibreMap.projection.fromScreenLocation(PointF(x, y))
 
-                currentSelectedMarker?.position = MaplibreUtils.fromLatLng(latLng)
+                currentSelectedMarker?.position = convertLatLng(latLng)
                 onMarkerDrag(currentSelectedMarker)
             }
             true
@@ -316,7 +327,7 @@ class MaplibreMapDelegateKt(private val mapboxMap: MapboxMap,
     }
 
     private fun handleCameraMove() {
-        val p = mapboxMap.cameraPosition
+        val p = maplibreMap.cameraPosition
         val cameraPosition = fromCameraPosition(p)
         onCameraChange(cameraPosition)
     }

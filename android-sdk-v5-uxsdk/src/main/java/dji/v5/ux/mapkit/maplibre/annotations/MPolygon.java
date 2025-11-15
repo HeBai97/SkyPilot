@@ -7,11 +7,11 @@ import dji.v5.ux.mapkit.core.models.DJILatLng;
 import dji.v5.ux.mapkit.core.models.annotations.DJIPolygon;
 import dji.v5.ux.mapkit.core.models.annotations.DJIPolygonOptions;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import com.mapbox.mapboxsdk.annotations.Polygon;
-import com.mapbox.mapboxsdk.annotations.Polyline;
-import com.mapbox.mapboxsdk.annotations.PolylineOptions;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
+import org.maplibre.android.annotations.Polygon;
+import org.maplibre.android.annotations.Polyline;
+import org.maplibre.android.annotations.PolylineOptions;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +24,16 @@ public class MPolygon implements DJIPolygon {
 
     private static final float NO_ALPHA = 0.0F;
 
-    private MapboxMap mapboxMap;
+    private MapLibreMap mapLibreMap;
     private Polygon polygon;
     private DJIPolygonOptions options;
     private Polyline border;
     private float borderAlpha;
 
 
-    public MPolygon(Polygon polygon, MapboxMap mapboxMap, DJIPolygonOptions options) {
+    public MPolygon(Polygon polygon, MapLibreMap mapLibreMap, DJIPolygonOptions options) {
         this.polygon = polygon;
-        this.mapboxMap = mapboxMap;
+        this.mapLibreMap = mapLibreMap;
         this.options = options;
 
         PolylineOptions polylineOptions = new PolylineOptions();
@@ -42,7 +42,7 @@ public class MPolygon implements DJIPolygon {
                 .color(options.getStrokeColor())
                 .width(options.getStrokeWidth() / 5f);
         borderAlpha = polylineOptions.getAlpha();
-        border = mapboxMap.addPolyline(polylineOptions);
+        border = mapLibreMap.addPolyline(polylineOptions);
     }
 
 
@@ -51,9 +51,9 @@ public class MPolygon implements DJIPolygon {
      */
     @Override
     public void remove() {
-        mapboxMap.removePolygon(polygon);
+        mapLibreMap.removePolygon(polygon);
         if (border != null) {
-            mapboxMap.removePolyline(border);
+            mapLibreMap.removePolyline(border);
         }
     }
 
@@ -149,14 +149,14 @@ public class MPolygon implements DJIPolygon {
 
         MPolygon mPolygon1 = (MPolygon) o;
 
-        if (mapboxMap != null ? !mapboxMap.equals(mPolygon1.mapboxMap) : mPolygon1.mapboxMap != null)
+        if (mapLibreMap != null ? !mapLibreMap.equals(mPolygon1.mapLibreMap) : mPolygon1.mapLibreMap != null)
             return false;
         return polygon != null ? polygon.equals(mPolygon1.polygon) : mPolygon1.polygon == null;
     }
 
     @Override
     public int hashCode() {
-        int result = mapboxMap != null ? mapboxMap.hashCode() : 0;
+        int result = mapLibreMap != null ? mapLibreMap.hashCode() : 0;
         result = 31 * result + (polygon != null ? polygon.hashCode() : 0);
         return result;
     }

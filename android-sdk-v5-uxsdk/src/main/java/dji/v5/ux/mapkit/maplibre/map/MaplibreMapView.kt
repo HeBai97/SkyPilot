@@ -5,27 +5,27 @@ import dji.v5.ux.mapkit.core.Mapkit
 import dji.v5.ux.mapkit.core.maps.DJIMap
 import dji.v5.ux.mapkit.core.maps.DJIMapView
 import dji.v5.ux.mapkit.core.maps.DJIMapViewInternal
-import com.mapbox.mapboxsdk.maps.MapView
-import com.mapbox.mapboxsdk.maps.MapboxMapOptions
-import com.mapbox.mapboxsdk.maps.Style
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.MapLibreMapOptions
+import org.maplibre.android.maps.Style
 
 class MaplibreMapView @JvmOverloads constructor(
         context: Context,
-        options: MapboxMapOptions = MapboxMapOptions.createFromAttributes(context)
+        options: MapLibreMapOptions = MapLibreMapOptions.createFromAttributes(context)
 ) : MapView(context, options), DJIMapViewInternal {
 
     override fun getDJIMapAsync(callback: DJIMapView.OnDJIMapReadyCallback?) {
-        getMapAsync { mapboxMap ->
+        getMapAsync { maplibreMap ->
             var styleLoaded = false
-            // 按照官方文档中描述 设置style完成后回调 ，但是如果立即addMarker addPolylne等操作是mapbox获取的style是null 所以不会成功的，需要延时回调onDJIMapReady 或者addMarker addPolylne 时返回null
-            mapboxMap.setStyle(getMapboxStyle()) {
+            // 按照官方文档中描述 设置style完成后回调 ，但是如果立即addMarker addPolylne等操作是maplibre获取的style是null 所以不会成功的，需要延时回调onDJIMapReady 或者addMarker addPolylne 时返回null
+            maplibreMap.setStyle(getMapboxStyle()) {
                 styleLoaded = true
             }
 
             var mapLoadedOnce = false
             val finishLoadingMapListener = OnDidFinishLoadingMapListener {
                 mapLoadedOnce = true
-                callback?.onDJIMapReady(MaplibreMapDelegateKt(mapboxMap, context, this))
+                callback?.onDJIMapReady(MaplibreMapDelegateKt(maplibreMap, context, this))
             }
             val startLoadingMapListener = OnWillStartLoadingMapListener {
                 if (mapLoadedOnce && styleLoaded) {
