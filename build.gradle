@@ -1,0 +1,17 @@
+apply from: rootProject.file('dependencies.gradle')
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.7.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$KOTLIN_VERSION"
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

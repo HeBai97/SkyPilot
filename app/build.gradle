@@ -1,0 +1,108 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+}
+
+def deps = rootProject.ext.deps
+
+android {
+    namespace = 'com.brainai.skypilot'
+    compileSdk = Integer.parseInt(project.ANDROID_COMPILE_SDK_VERSION)
+
+    defaultConfig {
+        applicationId = "com.brainai.skypilot"
+        minSdk = Integer.parseInt(project.ANDROID_MIN_SDK_VERSION)
+        targetSdk = Integer.parseInt(project.ANDROID_TARGET_SDK_VERSION)
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // 启用 MultiDex（DJI SDK 需要）
+        multiDexEnabled = true
+
+        ndk {
+            abiFilters = ['arm64-v8a']  // MSDK 仅支持此架构
+        }
+
+        packagingOptions {
+            pickFirst 'lib/arm64-v8a/libc++_shared.so'
+
+            doNotStrip "**/libconstants.so"
+            doNotStrip "**/libdji_innertools.so"
+            doNotStrip "**/libdjibase.so"
+            doNotStrip "**/libDJICSDKCommon.so"
+            doNotStrip "**/libDJIFlySafeCore-CSDK.so"
+            doNotStrip "**/libdjifs_jni-CSDK.so"
+            doNotStrip "**/libDJIRegister.so"
+            doNotStrip "**/libdjisdk_jni.so"
+            doNotStrip "**/libDJIUpgradeCore.so"
+            doNotStrip "**/libDJIUpgradeJNI.so"
+            doNotStrip "**/libDJIWaypointV2Core-CSDK.so"
+            doNotStrip "**/libdjiwpv2-CSDK.so"
+            doNotStrip "**/libFlightRecordEngine.so"
+            doNotStrip "**/libvideo-framing.so"
+            doNotStrip "**/libwaes.so"
+            doNotStrip "**/libagora-rtsa-sdk.so"
+            doNotStrip "**/libc++.so"
+            doNotStrip "**/libc++_shared.so"
+            doNotStrip "**/libmrtc_28181.so"
+            doNotStrip "**/libmrtc_agora.so"
+            doNotStrip "**/libmrtc_core.so"
+            doNotStrip "**/libmrtc_core_jni.so"
+            doNotStrip "**/libmrtc_data.so"
+            doNotStrip "**/libmrtc_log.so"
+            doNotStrip "**/libmrtc_onvif.so"
+            doNotStrip "**/libmrtc_rtmp.so"
+            doNotStrip "**/libmrtc_rtsp.so"
+        }
+    }
+
+    ndkVersion = project.ANDROID_NDK_VERSION
+
+    buildTypes {
+        debug {
+            // Debug 构建也应用 ProGuard 规则（但不混淆），确保类不被移除
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding = true  // 替代已废弃的 Kotlin Synthetics
+    }
+}
+
+dependencies {
+    implementation project(":uxsdk")
+
+    // DJI SDK 依赖 - 确保使用 implementation 而不是 compileOnly
+    def SDK_VERSION = rootProject.ext.SDK_VERSION
+    implementation "com.dji:dji-sdk-v5-aircraft:$SDK_VERSION"
+    implementation "com.dji:dji-sdk-v5-networkImp:$SDK_VERSION"
+
+
+    implementation deps.appcompat
+    implementation deps.material
+    implementation deps.constraintLayout
+    implementation deps.multidex  // 添加 multidex 支持（DJI SDK 可能需要）
+    implementation deps.lifecycleViewModel  // 用于 viewModelScope
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
