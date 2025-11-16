@@ -1,13 +1,11 @@
 package com.brainai.skypilot.models
 
-import android.R
-import android.content.Context
-import android.widget.ArrayAdapter
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.brainai.skypilot.data.FlightControlState
 import com.brainai.skypilot.data.MissionUploadStateInfo
-import dji.sdk.keyvalue.key.*
+import dji.sdk.keyvalue.key.DJIKey
+import dji.sdk.keyvalue.key.FlightControllerKey
+import dji.sdk.keyvalue.key.KeyTools
 import dji.sdk.keyvalue.value.common.LocationCoordinate2D
 import dji.v5.common.callback.CommonCallbacks
 import dji.v5.common.error.IDJIError
@@ -19,10 +17,6 @@ import dji.v5.manager.aircraft.waypoint3.WaylineExecutingInfoListener
 import dji.v5.manager.aircraft.waypoint3.WaypointActionListener
 import dji.v5.manager.aircraft.waypoint3.WaypointMissionExecuteStateListener
 import dji.v5.manager.aircraft.waypoint3.WaypointMissionManager
-import dji.v5.manager.areacode.AreaCode
-import dji.v5.manager.areacode.AreaCodeManager
-import dji.v5.utils.common.ContextUtil
-import dji.v5.utils.common.DjiSharedPreferencesManager
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.disposables.Disposable

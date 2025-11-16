@@ -3,19 +3,18 @@ package com.brainai.skypilot.pages
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Button
 import android.widget.TextView
-import androidx.core.app.ActivityCompat
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import com.brainai.skypilot.MainActivity
 import com.brainai.skypilot.R
 import com.brainai.skypilot.models.ConnectionViewModel
 import com.brainai.skypilot.models.MSDKInfoViewModel
-import com.secneo.sdk.Helper
 import dji.v5.common.error.IDJIError
 import dji.v5.common.register.DJISDKInitEvent
 import dji.v5.manager.interfaces.SDKManagerCallback
@@ -95,7 +94,7 @@ class ConnectionActivity : AppCompatActivity() {
             //text_core_info.text = it.coreInfo.toString()
         }
         model.registerState.observe(this) {
-                mTextConnectionStatus.text = model.registerState.value
+            mTextConnectionStatus.text = model.registerState.value
         }
         ToastUtils.showToast(model.registerState.value.toString())
         mBtnPair.setOnClickListener {

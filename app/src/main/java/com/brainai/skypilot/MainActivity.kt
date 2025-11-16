@@ -2,15 +2,10 @@ package com.brainai.skypilot
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import com.brainai.skypilot.pages.WayPointV3
-import dji.v5.common.error.IDJIError
-import dji.v5.common.register.DJISDKInitEvent
-import dji.v5.manager.SDKManager
-import dji.v5.manager.interfaces.SDKManagerCallback
 
 class MainActivity : AppCompatActivity() {
 

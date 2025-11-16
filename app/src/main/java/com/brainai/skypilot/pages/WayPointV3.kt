@@ -2,14 +2,19 @@ package com.brainai.skypilot.pages
 
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
-import dji.v5.common.callback.CommonCallbacks
-import dji.v5.common.error.IDJIError
-import dji.v5.utils.common.*
-import java.io.File
-
+import android.widget.Button
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.brainai.skypilot.R
+import com.brainai.skypilot.models.WayPointObject
+import com.dji.flysafe.mapkit.core.core.models.DJIBitmapDescriptor
+import com.dji.flysafe.mapkit.core.core.models.DJILatLng
+import com.dji.flysafe.mapkit.core.core.models.annotations.DJIMarkerOptions
+import com.dji.flysafe.mapkit.core.core.models.annotations.DJIPolylineOptions
 import com.mapbox.mapboxsdk.Mapbox
 import com.mapbox.mapboxsdk.annotations.Marker
 import com.mapbox.mapboxsdk.annotations.MarkerOptions
@@ -18,33 +23,23 @@ import com.mapbox.mapboxsdk.maps.MapboxMap
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback
 import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.maps.SupportMapFragment
-
-
-import dji.v5.manager.aircraft.waypoint3.model.WaypointMissionExecuteState
-import kotlin.collections.ArrayList
-import android.graphics.Color
-import android.widget.Button
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.dji.flysafe.mapkit.core.core.models.DJIBitmapDescriptor
-import com.dji.flysafe.mapkit.core.core.models.DJILatLng
-import com.dji.flysafe.mapkit.core.core.models.annotations.DJIMarkerOptions
-import com.dji.flysafe.mapkit.core.core.models.annotations.DJIPolylineOptions
-import com.brainai.skypilot.R
-import com.brainai.skypilot.models.WayPointObject
-
-
 import dji.sdk.wpmz.jni.JNIWPMZManager
 import dji.sdk.wpmz.value.mission.WaylineExecuteWaypoint
+import dji.v5.common.callback.CommonCallbacks
+import dji.v5.common.error.IDJIError
 import dji.v5.manager.aircraft.waypoint3.WPMZParserManager
 import dji.v5.manager.aircraft.waypoint3.WaylineExecutingInfoListener
 import dji.v5.manager.aircraft.waypoint3.WaypointActionListener
 import dji.v5.manager.aircraft.waypoint3.model.WaylineExecutingInfo
-
-
+import dji.v5.manager.aircraft.waypoint3.model.WaypointMissionExecuteState
+import dji.v5.utils.common.ContextUtil
+import dji.v5.utils.common.DiskUtil
+import dji.v5.utils.common.FileUtils
+import dji.v5.utils.common.ToastUtils
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 
