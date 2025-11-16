@@ -19,109 +19,222 @@ import dji.v5.network.IDJINetworkStatusListener
 import dji.v5.utils.common.LogUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * MSDK信息视图模型
+ * 负责管理DJI MSDK相关的信息，包括：
+ * 1. SDK版本信息
+ * 2. 固件版本
+ * 3. 网络状态
+ * 4. 区域码信息
+ * 5. LDM(本地数据管理)状态
+ */
 class MSDKInfoViewModel : ViewModel() {
 
-    val tag: String = LogUtils.getTag(this)
+    private val tag: String = LogUtils.getTag(this)
 
+    // LiveData 用于观察MSDK信息变化
     val msdkInfo = MutableLiveData<MSDKInfo>()
+
+    // 主标题LiveData
     val mainTitle = MutableLiveData<String>()
+
+    // 标记是否已初始化监听器
     private val isInited = AtomicBoolean(false)
-    private val msdkInfoModel: MSDKInfoModel = MSDKInfoModel()
-    private var areaCodeChangeListener: AreaCodeChangeListener
-    private var netWorkStatusListener: IDJINetworkStatusListener
+
+    // MSDK信息模型
+    private val msdkInfoModel: MSDKInfoModel = MSDKInfoModel
+
+    // 区域码变更监听器
+    private lateinit var areaCodeChangeListener: AreaCodeChangeListener
+
+    // 网络状态监听器
+    private lateinit var netWorkStatusListener: IDJINetworkStatusListener
+
+    // 网络状态常量
+    companion object {
+        private const val ONLINE_STR = "online"
+        private const val NO_NETWORK_STR = "no_network"
+        private const val INNER_NETWORK_STR = "inner_network"
+        private const val OUTER_NETWORK_STR = "outer_network"
+    }
 
     init {
-        msdkInfo.value = MSDKInfo(msdkInfoModel.getSDKVersion())
-        msdkInfo.value?.buildVer = msdkInfoModel.getBuildVersion()
-        msdkInfo.value?.isDebug = msdkInfoModel.isDebug()
-        msdkInfo.value?.packageProductCategory = msdkInfoModel.getPackageProductCategory()
-        msdkInfo.value?.isLDMEnabled = LDMManager.getInstance().isLDMEnabled.toString()
-        msdkInfo.value?.isLDMLicenseLoaded = LDMManager.getInstance().isLDMLicenseLoaded.toString()
-        msdkInfo.value?.coreInfo = msdkInfoModel.getCoreInfo()
-
-        areaCodeChangeListener = AreaCodeChangeListener { _, changed ->
-            //LogUtils.i(logTag, "areaCodeData", changed)
-            msdkInfo.value?.countryCode = if (changed == null) DEFAULT_STR else changed.areaCode
-            refreshMSDKInfo()
-        }
-        netWorkStatusListener = IDJINetworkStatusListener {
-            //LogUtils.i(logTag, "isNetworkAvailable", it)
-            updateNetworkInfo(it)
-            refreshMSDKInfo()
-        }
-
-        refreshMSDKInfo()
-    }
-
-    override fun onCleared() {
-        removeListener()
-    }
-
-    fun refreshMSDKInfo() {
-        msdkInfo.postValue(msdkInfo.value)
+        initializeMSDKInfo()
+        setupListeners()
     }
 
     /**
-     * 需要在register成功后，再调用
+     * 初始化MSDK信息
+     */
+    private fun initializeMSDKInfo() {
+        msdkInfo.value = MSDKInfo(msdkInfoModel.getSDKVersion()).apply {
+            buildVer = msdkInfoModel.getBuildVersion()
+            isDebug = msdkInfoModel.isDebug()
+            packageProductCategory = msdkInfoModel.getPackageProductCategory()
+            isLDMEnabled = LDMManager.getInstance().isLDMEnabled.toString()
+            isLDMLicenseLoaded = LDMManager.getInstance().isLDMLicenseLoaded.toString()
+            coreInfo = msdkInfoModel.getCoreInfo()
+        }
+        refreshMSDKInfo()
+    }
+
+    /**
+     * 设置监听器
+     */
+    private fun setupListeners() {
+        // 区域码变更监听
+        areaCodeChangeListener = AreaCodeChangeListener { _, changed ->
+            msdkInfo.value?.countryCode = changed?.areaCode ?: DEFAULT_STR
+            LogUtils.i(tag, "区域码变更为: ${msdkInfo.value?.countryCode}")
+            refreshMSDKInfo()
+        }
+
+        // 网络状态变更监听
+        netWorkStatusListener = IDJINetworkStatusListener { isAvailable ->
+            updateNetworkInfo(isAvailable)
+            refreshMSDKInfo()
+        }
+    }
+
+    /**
+     * 当ViewModel被清除时调用，用于释放资源
+     */
+    override fun onCleared() {
+        super.onCleared()
+        removeListener()
+    }
+
+    /**
+     * 刷新MSDK信息
+     */
+    fun refreshMSDKInfo() {
+        msdkInfo.value?.let { info ->
+            msdkInfo.postValue(info)
+        }
+    }
+
+    /**
+     * 初始化监听器
+     * 注意：需要在SDK注册成功后调用
      */
     fun initListener() {
         if (!SDKManager.getInstance().isRegistered) {
+            LogUtils.w(tag, "SDK未注册，无法初始化监听器")
             return
-        }
-        if (isInited.getAndSet(true)) {
-            return
-        }
-        FlightControllerKey.KeyConnection.create().listen(this) {
-            LogUtils.i(tag, "KeyConnection:$it")
-            updateFirmwareVersion()
         }
 
-        AreaCodeManager.getInstance().addAreaCodeChangeListener(areaCodeChangeListener)
-        DJINetworkManager.getInstance().addNetworkStatusListener(netWorkStatusListener)
-        ProductKey.KeyProductType.create().listen(this) {
-            LogUtils.i(tag, "KeyProductType:$it")
-            it?.let {
-                msdkInfo.value?.productType = it
-                refreshMSDKInfo()
+        if (isInited.getAndSet(true)) {
+            LogUtils.d(tag, "监听器已初始化，跳过重复初始化")
+            return
+        }
+
+        try {
+            // 监听飞行控制器连接状态
+            FlightControllerKey.KeyConnection.create().listen(this) { isConnected ->
+                LogUtils.i(tag, "飞行控制器连接状态: $isConnected")
+                if (isConnected == true) {
+                    updateFirmwareVersion()
+                }
+            }
+
+            // 添加区域码变更监听
+            AreaCodeManager.getInstance().addAreaCodeChangeListener(areaCodeChangeListener)
+
+            // 添加网络状态监听
+            DJINetworkManager.getInstance().addNetworkStatusListener(netWorkStatusListener)
+
+            // 监听产品类型变化
+            ProductKey.KeyProductType.create().listen(this) { productType ->
+                LogUtils.i(tag, "产品类型变更为: $productType")
+                productType?.let {
+                    msdkInfo.value?.productType = it
+                    refreshMSDKInfo()
+                }
+            }
+
+            LogUtils.i(tag, "MSDK信息监听器初始化完成")
+        } catch (e: Exception) {
+            LogUtils.e(tag, "初始化监听器失败", e)
+            isInited.set(false) // 发生异常时重置初始化状态
+        }
+    }
+
+    /**
+     * 移除所有监听器
+     */
+    private fun removeListener() {
+        try {
+            // 取消所有通过KeyManager注册的监听
+            KeyManager.getInstance().cancelListen(this)
+
+            // 移除区域码变更监听
+            AreaCodeManager.getInstance().removeAreaCodeChangeListener(areaCodeChangeListener)
+
+            // 移除网络状态监听
+            DJINetworkManager.getInstance().removeNetworkStatusListener(netWorkStatusListener)
+
+            LogUtils.i(tag, "已移除所有监听器")
+        } catch (e: Exception) {
+            LogUtils.e(tag, "移除监听器时出错", e)
+        } finally {
+            isInited.set(false)
+        }
+    }
+
+    /**
+     * 更新网络信息
+     * @param isAvailable 网络是否可用
+     */
+    private fun updateNetworkInfo(isAvailable: Boolean) {
+        msdkInfo.value?.networkInfo = if (isAvailable) ONLINE_STR else NO_NETWORK_STR
+
+        // 如果需要检测内网/外网状态，可以取消下面的注释
+        /*
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val isInInnerNetwork = SDKConfig.getInstance().isInInnerNetwork
+                msdkInfo.postValue(msdkInfo.value?.apply {
+                    networkInfo = if (isInInnerNetwork) INNER_NETWORK_STR else OUTER_NETWORK_STR
+                })
+            } catch (e: Exception) {
+                LogUtils.e(tag, "获取网络状态失败", e)
             }
         }
+        */
     }
 
-    private fun removeListener() {
-        KeyManager.getInstance().cancelListen(this)
-        AreaCodeManager.getInstance().removeAreaCodeChangeListener(areaCodeChangeListener)
-        DJINetworkManager.getInstance().removeNetworkStatusListener(netWorkStatusListener)
-    }
-
-    private fun updateNetworkInfo(isAvailable: Boolean) {
-        val ONLINE_STR = "online"
-        val NO_NETWORK_STR = "no network"
-        msdkInfo.value?.networkInfo = if(isAvailable) ONLINE_STR else NO_NETWORK_STR
-//        viewModelScope.launch {
-//            var isInInnerNetwork: Boolean
-//            withContext(Dispatchers.IO) {
-//                isInInnerNetwork = SDKConfig.getInstance().isInInnerNetwork
-//            }
-//            msdkInfo.value?.networkInfo =
-//                if (isInInnerNetwork) IN_INNER_NETWORK_STR else IN_OUT_NETWORK_STR
-//        }
-    }
-
+    /**
+     * 更新固件版本信息
+     */
     private fun updateFirmwareVersion() {
-        ProductKey.KeyFirmwareVersion.create().get({
-            LogUtils.i(tag, "updateFirmwareVersion onSuccess:$it")
-            msdkInfo.value?.firmwareVer = it ?: DEFAULT_STR
-            refreshMSDKInfo()
-        }) {
-            LogUtils.i(tag, "updateFirmwareVersion onFailure:$it")
-            msdkInfo.value?.firmwareVer = DEFAULT_STR
-            refreshMSDKInfo()
-        }
+        ProductKey.KeyFirmwareVersion.create().get(
+            onSuccess = { version ->
+                LogUtils.i(tag, "固件版本获取成功: $version")
+                msdkInfo.value?.firmwareVer = version ?: DEFAULT_STR
+                refreshMSDKInfo()
+            },
+            onFailure = { error ->
+                LogUtils.e(tag, "获取固件版本失败: $error")
+                msdkInfo.value?.firmwareVer = DEFAULT_STR
+                refreshMSDKInfo()
+            }
+        )
     }
 
+    /**
+     * 更新LDM(本地数据管理)状态
+     */
     fun updateLDMStatus() {
-        msdkInfo.value?.isLDMEnabled = LDMManager.getInstance().isLDMEnabled.toString()
-        msdkInfo.value?.isLDMLicenseLoaded = LDMManager.getInstance().isLDMLicenseLoaded.toString()
-        refreshMSDKInfo()
+        try {
+            val ldmManager = LDMManager.getInstance()
+            msdkInfo.value?.apply {
+                isLDMEnabled = ldmManager.isLDMEnabled.toString()
+                isLDMLicenseLoaded = ldmManager.isLDMLicenseLoaded.toString()
+                refreshMSDKInfo()
+            }
+            LogUtils.d(tag, "LDM状态已更新: enabled=${msdkInfo.value?.isLDMEnabled}, licenseLoaded=${msdkInfo.value?.isLDMLicenseLoaded}")
+        } catch (e: Exception) {
+            LogUtils.e(tag, "更新LDM状态失败", e)
+        }
     }
 }

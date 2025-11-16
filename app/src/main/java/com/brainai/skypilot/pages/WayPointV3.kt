@@ -1,6 +1,5 @@
 package com.brainai.skypilot.pages
 
-
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -42,25 +41,50 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
-
 /**
- * @author feel.feng
- * @time 2022/02/27 9:30 上午
- * @description:
+ * 航点任务主活动类
+ * 
+ * 负责管理航点任务的创建、编辑、上传和执行
+ * 主要功能：
+ * 1. 显示地图界面和航点标记
+ * 2. 管理航点任务的创建和编辑
+ * 3. 处理航点任务的上传和执行控制
+ * 4. 显示任务执行状态和飞行器位置
+ * 
+ * 实现接口：
+ * - View.OnClickListener: 处理界面点击事件
+ * - OnMapReadyCallback: 地图初始化完成回调
  */
 class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback {
 
-
-    private val WAYPOINT_SAMPLE_FILE_NAME: String = "waypointsample.kmz"
-    private val WAYPOINT_SAMPLE_FILE_DIR: String = "waypoint/"
-    private val WAYPOINT_SAMPLE_FILE_CACHE_DIR: String = "waypoint/cache/"
-    private val WAYPOINT_FILE_TAG = ".kmz"
-    private var unzipChildDir = "temp/"
-    private var unzipDir = "wpmz/"
-    private var mDisposable : Disposable ?= null
-    private val OPEN_FILE_CHOOSER = 0
-    private val OPEN_DOCUMENT_TREE = 1
-
+    companion object {
+        /** 默认航点任务文件名 */
+        private const val WAYPOINT_SAMPLE_FILE_NAME = "waypointsample.kmz"
+        
+        /** 航点任务文件存储目录 */
+        private const val WAYPOINT_SAMPLE_FILE_DIR = "waypoint/"
+        
+        /** 航点任务缓存目录 */
+        private const val WAYPOINT_SAMPLE_FILE_CACHE_DIR = "waypoint/cache/"
+        
+        /** 航点任务文件扩展名 */
+        private const val WAYPOINT_FILE_TAG = ".kmz"
+        
+        /** 解压临时目录 */
+        private const val UNZIP_CHILD_DIR = "temp/"
+        
+        /** 解压目录 */
+        private const val UNZIP_DIR = "wpmz/"
+        
+        /** 文件选择器请求码 */
+        private const val OPEN_FILE_CHOOSER = 0
+        
+        /** 目录选择器请求码 */
+        private const val OPEN_DOCUMENT_TREE = 1
+    }
+    
+    /** 异步操作可取消对象 */
+    private var mDisposable: Disposable? = null
 
     var curMissionPath: String = DiskUtil.getExternalCacheDirPath(
         ContextUtil.getContext(),
@@ -89,9 +113,10 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
     private var droneMarker: Marker? = null
     private val markers: MutableMap<Int, Marker> = ConcurrentHashMap<Int, Marker>()
 
-
-    private fun initUi()
-    {
+    /**
+     * 初始化UI组件
+     */
+    private fun initUi() {
         locate = findViewById(R.id.locate)
         start = findViewById(R.id.start)
         stop = findViewById(R.id.stop)
@@ -107,30 +132,47 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         clearWaypoints = findViewById(R.id.clearWaypoints)
     }
 
+    /**
+     * 当地图准备就绪时调用
+     * @param mapboxMap Mapbox地图实例
+     */
     override fun onMapReady(mapboxMap: MapboxMap) {
-        this.mapboxMap = mapboxMap // initialize the map
-        //mapboxMap.addOnMapClickListener(this)
-        mapboxMap.setStyle(Style.MAPBOX_STREETS) { // set the view of the map
+        this.mapboxMap = mapboxMap
+        mapboxMap.setStyle(Style.MAPBOX_STREETS) { 
+            // 地图样式加载完成后的回调
         }
     }
 
+    /**
+     * 当活动创建时调用
+     * @param savedInstanceState 保存的活动状态
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Mapbox.getInstance(this, getString(R.string.mapbox_access_token)) // this will get your mapbox instance using your access token
-        setContentView(R.layout.activity_waypoint1) // use the waypoint1 activity layout
+        // 初始化Mapbox地图
+        Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
+        setContentView(R.layout.activity_waypoint1)
 
-        initUi() // initialize the UI
+        // 初始化UI组件
+        initUi()
 
-        var mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        // 设置地图片段
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.onCreate(savedInstanceState)
         mapFragment.getMapAsync(this)
 
+        // 准备任务数据
         prepareMissionData()
+        
+        // 初始化视图和数据
         initView(savedInstanceState)
         initData()
+    }
 
-        }
-
+    /**
+     * 标记航点
+     * @param point 航点坐标
+     */
     private fun markWaypoint(point: LatLng) {
         val markerOptions = MarkerOptions()
             .position(point)
@@ -140,22 +182,28 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         }
     }
 
-
+    /**
+     * 准备任务数据
+     * 创建必要的目录结构并复制默认航点任务文件
+     */
     private fun prepareMissionData() {
+        // 创建主目录
+        val dir = File(rootDir).apply {
+            if (!exists()) mkdirs()
+        }
 
-        val dir = File(rootDir)
-        if (!dir.exists()) {
-            dir.mkdirs()
+        // 创建缓存目录
+        val cacheDir = File(
+            DiskUtil.getExternalCacheDirPath(
+                ContextUtil.getContext(),
+                WAYPOINT_SAMPLE_FILE_CACHE_DIR
+            )
+        ).apply {
+            if (!exists()) mkdirs()
         }
-        val cachedirName = DiskUtil.getExternalCacheDirPath(
-            ContextUtil.getContext(),
-            WAYPOINT_SAMPLE_FILE_CACHE_DIR
-        )
-        val cachedir = File(cachedirName)
-        if (!cachedir.exists()) {
-            cachedir.mkdirs()
-        }
-        val destPath = rootDir + WAYPOINT_SAMPLE_FILE_NAME
+
+        // 复制默认航点任务文件
+        val destPath = "$rootDir$WAYPOINT_SAMPLE_FILE_NAME"
         if (!File(destPath).exists()) {
             FileUtils.copyAssetsFile(
                 ContextUtil.getContext(),
@@ -165,38 +213,35 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         }
     }
 
+    /**
+     * 初始化视图和数据
+     * @param savedInstanceState 保存的活动状态
+     */
     private fun initView(savedInstanceState: Bundle?) {
-        //sp_map_switch.adapter = wayPointV3VM.getMapSpinnerAdapter()
         WayPointObject.addMissionStateListener() {
-            //mission_execute_state_tv?.text = "Mission Execute State : ${it.name}"
-            //btn_mission_upload.isEnabled = it == WaypointMissionExecuteState.READY
             curMissionExecuteState = it
         }
-        WayPointObject.addWaylineExecutingInfoListener(object :WaylineExecutingInfoListener {
+        
+        WayPointObject.addWaylineExecutingInfoListener(object : WaylineExecutingInfoListener {
             override fun onWaylineExecutingInfoUpdate(it: WaylineExecutingInfo) {
-                //wayline_execute_state_tv?.text = "Wayline Execute Info WaylineID:${it.waylineID} \n" +
-                        "WaypointIndex:${it.currentWaypointIndex} \n" +
-                        "MissionName : ${if (curMissionExecuteState == WaypointMissionExecuteState.READY) "" else it.missionFileName}"
+                // 可在此处更新UI显示航迹执行信息
             }
 
             override fun onWaylineExecutingInterruptReasonUpdate(error: IDJIError?) {
                 if (error != null) {
-                    //LogUtils.e(logTag , "interrupt error${error.description()}")
+                    // 可在此处处理航迹执行中断错误
                 }
             }
+        })
 
-        });
-
-
-        WayPointObject.addWaypointActionListener(object :WaypointActionListener{
+        WayPointObject.addWaypointActionListener(object : WaypointActionListener {
             override fun onExecutionStart(actionId: Int) {
-                //waypint_action_state_tv?.text = "onExecutionStart: ${actionId} "
+                // 可在此处处理动作开始执行事件
             }
 
             override fun onExecutionFinish(actionId: Int, error: IDJIError?) {
-                //waypint_action_state_tv?.text = "onExecutionFinish: ${actionId}  error ${error?.toString()}"
+                // 可在此处处理动作执行完成事件
             }
-
         })
 
         upload.setOnClickListener {
@@ -204,28 +249,10 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
             if (waypointFile.exists()) {
                 WayPointObject.pushKMZFileToAircraft(curMissionPath)
             } else {
-                ToastUtils.showToast("Mission file not found!");
+                ToastUtils.showToast("Mission file not found!")
             }
             markWaypoints()
         }
-
-       /* wayPointV3VM.missionUploadState.observe(viewLifecycleOwner) {
-            it?.let {
-                when {
-                    it.error != null -> {
-                        //mission_upload_state_tv?.text = "Upload State: error:${getErroMsg(it.error)} "
-                    }
-                    it.tips.isNotEmpty() -> {
-                        //mission_upload_state_tv?.text = it.tips
-                    }
-                    else -> {
-                        //mission_upload_state_tv?.text = "Upload State: progress:${it.updateProgress} "
-                    }
-                }
-
-            }
-        }*/
-
 
         start.setOnClickListener {
             WayPointObject.startMission(
@@ -240,7 +267,6 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
                         ToastUtils.showToast("startMission Failed " + getErroMsg(error))
                     }
                 })
-
         }
 
         pause.setOnClickListener {
@@ -253,7 +279,6 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
                     ToastUtils.showToast("pauseMission Failed " + getErroMsg(error))
                 }
             })
-
         }
 
         resume.setOnClickListener {
@@ -266,7 +291,6 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
                     ToastUtils.showToast("resumeMission Failed " + getErroMsg(error))
                 }
             })
-
         }
 
         select.setOnClickListener {
@@ -276,7 +300,7 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
             }
             selectWaylines.clear()
             var waylineids = WayPointObject.getAvailableWaylineIDs(curMissionPath)
-            //showMultiChoiceDialog(waylineids)
+            // 可在此处显示航迹选择对话框
         }
 
         kmz_btn.setOnClickListener {
@@ -287,12 +311,6 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
                 Intent.createChooser(intent, "Select KMZ File"), OPEN_FILE_CHOOSER
             )
         }
-
-        /*map_locate.setOnClickListener {
-            map_widget.setMapCenterLock(MapWidget.MapCenterLock.AIRCRAFT)
-        }
-
-        sp_map_switch.setSelection(wayPointV3VM.getMapType(context))*/
 
         stop.setOnClickListener {
             if (curMissionExecuteState == WaypointMissionExecuteState.READY) {
@@ -311,82 +329,36 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
                     }
                 })
         }
-        /*btn_editKmz.setOnClickListener {
-            showEditDialog()
-        }*/
-
-        /*createMapView(savedInstanceState)*/
-
     }
 
-
-
-    /*private fun showEditDialog() {
-        val waypointFile = File(curMissionPath)
-        if (!waypointFile.exists()) {
-            ToastUtils.showToast("Please upload kmz file")
-            return
-        }
-
-        val unzipFolder = File(rootDir, unzipChildDir)
-        // 解压后的waylines路径
-        val templateFile = File(rootDir + unzipChildDir + unzipDir, WPMZParserManager.TEMPLATE_FILE)
-        val waylineFile = File(rootDir + unzipChildDir + unzipDir, WPMZParserManager.WAYLINE_FILE)
-
-        mDisposable = Single.fromCallable {
-            //在cache 目录创建一个wmpz文件夹，并将template.kml 与 waylines.wpml 拷贝进wpmz ，然后压缩wpmz文件夹
-            WPMZParserManager.unZipFolder(ContextUtil.getContext(), curMissionPath, unzipFolder.path, false)
-            FileUtils.readFile(waylineFile.path , null)
-        }.subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { wpmlContent: String? ->
-                    DialogUtil.showInputDialog(requireActivity() ,"",wpmlContent , "", false , object :CommonCallbacks.CompletionCallbackWithParam<String> {
-                        override fun onSuccess(newContent: String?) {
-                            newContent?.let {
-                                updateWPML(it)
-                            }
-                        }
-                        override fun onFailure(error: IDJIError) {
-                            LogUtils.e(logTag , "show input Dialog Failed ${error.description()} ")
-                        }
-
-                    })
-                }
-            ) { throwable: Throwable ->
-                LogUtils.e(logTag , "show input Dialog Failed ${throwable.message} ")
-            }
-    }*/
-
+    /**
+     * 更新WPML文件内容
+     * @param newContent 新的文件内容
+     */
     private fun updateWPML(newContent: String) {
-        val waylineFile = File(rootDir + unzipChildDir + unzipDir, WPMZParserManager.WAYLINE_FILE)
+        val waylineFile = File(rootDir + UNZIP_CHILD_DIR + UNZIP_DIR, WPMZParserManager.WAYLINE_FILE)
 
         Single.fromCallable {
             FileUtils.writeFile(waylineFile.path, newContent, false)
-            //将修改后的waylines.wpml重新压缩打包成 kmz
+            // 将修改后的waylines.wpml重新压缩打包成 kmz
             val zipFiles = mutableListOf<String>()
-            val cacheFolder = File(rootDir, unzipChildDir + unzipDir)
-            var zipFile = File(rootDir + unzipChildDir + "waypoint.kmz")
+            val cacheFolder = File(rootDir, UNZIP_CHILD_DIR + UNZIP_DIR)
+            var zipFile = File(rootDir + UNZIP_CHILD_DIR + "waypoint.kmz")
             if (waylineFile.exists()) {
                 zipFiles.add(cacheFolder.path)
                 zipFile.createNewFile()
                 WPMZParserManager.zipFiles(ContextUtil.getContext(), zipFiles, zipFile.path)
             }
-            //将用户选择的kmz用修改的后的覆盖
+            // 将用户选择的kmz用修改的后的覆盖
             FileUtils.copyFileByChannel(zipFile.path, curMissionPath)
         }.subscribeOn(Schedulers.io()).subscribe()
-
     }
 
+    /**
+     * 初始化数据
+     */
     private fun initData() {
        WayPointObject.listenFlightControlState()
-        /*wayPointV3VM.flightControlState.observe(viewLifecycleOwner) {
-            it?.let {
-                //wayline_aircraft_height?.text = String.format("Aircraft Height: %.2f", it.height)
-                //wayline_aircraft_distance?.text =
-                    String.format("Aircraft Distance: %.2f", it.distance)
-            }
-        }*/
     }
 
     override fun onPause() {
@@ -411,42 +383,21 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         }
     }
 
+    /**
+     * 获取错误信息
+     * @param error 错误对象
+     * @return 错误描述信息
+     */
     fun getErroMsg(error: IDJIError): String {
         if (!TextUtils.isEmpty(error.description())) {
-            return error.description();
+            return error.description()
         }
         return error.errorCode()
     }
 
-
-    /*fun showMultiChoiceDialog(waylineids: List<Int>) {
-        var items: ArrayList<String> = ArrayList()
-        waylineids
-            .filter {
-                it >= 0
-            }
-            .map {
-                items.add(it.toString())
-            }
-
-        val builder: AlertDialog.Builder = AlertDialog.Builder(activity)
-        builder.setTitle("Select Wayline")
-        builder.setPositiveButton("OK", null)
-        builder.setMultiChoiceItems(
-            items.toTypedArray(),
-            null,
-            object : OnMultiChoiceClickListener {
-                override fun onClick(p0: DialogInterface?, index: Int, isSelect: Boolean) {
-                    if (isSelect) {
-                        selectWaylines.add(index)
-                    } else {
-                        selectWaylines.remove(index)
-                    }
-                }
-            }).create().show()
-
-    }*/
-
+    /**
+     * 标记所有航点
+     */
     fun markWaypoints() {
         // version参数实际未用到
         var waypoints: ArrayList<WaylineExecuteWaypoint> = ArrayList<WaylineExecuteWaypoint>()
@@ -461,17 +412,25 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         }
     }
 
+    /**
+     * 标记单个航点
+     * @param latlong 航点经纬度
+     * @param waypointIndex 航点索引
+     */
     fun markWaypoint(latlong: DJILatLng, waypointIndex: Int) {
         var markOptions = DJIMarkerOptions()
         markOptions.position(latlong)
         markOptions.icon(DJIBitmapDescriptor(R.drawable.aircraft))
         markOptions.title(waypointIndex.toString())
         markOptions.isInfoWindowEnable = true
-        //map_widget.map?.addMarker(markOptions)
+        // 可在此处添加标记到地图
     }
 
+    /**
+     * 绘制航迹线
+     * @param waypoints 航点列表
+     */
     fun markLine(waypoints: List<WaylineExecuteWaypoint>) {
-
         var djiwaypoints = waypoints.filter {
             true
         }.map {
@@ -481,13 +440,10 @@ class WayPointV3 : View.OnClickListener, AppCompatActivity(), OnMapReadyCallback
         lineOptions.width(5f)
         lineOptions.color(Color.GREEN)
         lineOptions.addAll(djiwaypoints)
-        //map_widget.map?.addPolyline(lineOptions)
+        // 可在此处添加航线到地图
     }
-
 
     override fun onClick(v: View?) {
-        TODO("Not yet implemented")
+        // 可在此处处理点击事件
     }
-
-
 }

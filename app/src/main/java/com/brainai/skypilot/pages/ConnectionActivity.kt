@@ -2,6 +2,7 @@ package com.brainai.skypilot.pages
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -21,29 +22,66 @@ import dji.v5.manager.interfaces.SDKManagerCallback
 import dji.v5.utils.common.StringUtils
 import dji.v5.utils.common.ToastUtils
 
-
+/**
+ * 设备连接活动
+ * 主要功能：
+ * 1. 初始化DJI SDK
+ * 2. 处理设备连接状态
+ * 3. 显示设备信息和连接状态
+ * 4. 提供配网功能
+ */
 class ConnectionActivity : AppCompatActivity() {
-    private lateinit var mTextConnectionStatus: TextView
-    private lateinit var mTextProduct: TextView
-    private lateinit var mTextModelAvailable: TextView
-    private lateinit var mBtnOpen: Button
-    private lateinit var mBtnPair: Button
-    private lateinit var mVersionTv: TextView
+    // UI组件
+    private lateinit var mTextConnectionStatus: TextView  // 连接状态显示
+    private lateinit var mTextProduct: TextView           // 产品信息显示
+    private lateinit var mTextModelAvailable: TextView    // 型号可用性显示
+    private lateinit var mBtnOpen: Button                 // 打开主界面按钮
+    private lateinit var mBtnPair: Button                 // 配网按钮
+    private lateinit var mVersionTv: TextView             // 版本信息显示
 
+    // ViewModel
     private val model: ConnectionViewModel by viewModels()
-    protected val msdkInfoVm: MSDKInfoViewModel by viewModels()
+    private val msdkInfoVm: MSDKInfoViewModel by viewModels()
+    
+    // Handler用于主线程操作
     private val handler: Handler = Handler(Looper.getMainLooper())
-    // this is all our data stored in the view model
 
     companion object {
-        const val TAG = "ConnectionActivity"
+        private const val TAG = "ConnectionActivity"
+        
+        /**
+         * 启动ConnectionActivity的便捷方法
+         * @param context 上下文
+         */
+        fun start(context: Context) {
+            val intent = Intent(context, ConnectionActivity::class.java)
+            context.startActivity(intent)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
-        ActivityCompat.requestPermissions(this, // request all the permissions that we'll need
+        // 请求必要的权限
+        requestRequiredPermissions()
+        
+        // 初始化UI
+        initUI()
+        
+        // 注册DJI SDK
+        registerApp()
+        
+        // 初始化MSDK信息显示
+        initMSDKInfoView()
+    }
+
+    /**
+     * 请求应用所需的权限
+     */
+    private fun requestRequiredPermissions() {
+        ActivityCompat.requestPermissions(
+            this,
             arrayOf(
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.VIBRATE,
@@ -58,99 +96,158 @@ class ConnectionActivity : AppCompatActivity() {
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.SYSTEM_ALERT_WINDOW,
                 Manifest.permission.READ_PHONE_STATE
-            ), 1)
-
-        initUI()
-        registerApp()
-        initMSDKInfoView()
-
+            ),
+            1
+        )
     }
 
-
-    private fun initUI() { // Initializes the UI with all the string values
+    /**
+     * 初始化UI组件
+     */
+    private fun initUI() {
+        // 初始化视图引用
         mTextConnectionStatus = findViewById(R.id.text_connection_status)
         mTextModelAvailable = findViewById(R.id.text_model_available)
         mTextProduct = findViewById(R.id.text_product_info)
         mBtnOpen = findViewById(R.id.btn_open)
         mVersionTv = findViewById(R.id.textView2)
-        //mVersionTv.text = resources.getString(R.string.sdk_version, DJISDKManager.getInstance().sdkVersion)
-        mBtnOpen.isEnabled = false
-        mBtnOpen.setOnClickListener { // navigate to the main activity
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        }
         mBtnPair = findViewById(R.id.btn_pair)
+        
+        // 设置打开按钮点击事件
+        mBtnOpen.isEnabled = false
+        mBtnOpen.setOnClickListener {
+            MainActivity.start(this)
+            finish()
+        }
+        
+        // 设置配网按钮点击事件
+        mBtnPair.setOnClickListener {
+            startPairing()
+        }
     }
 
-
-    @SuppressLint("SetTextI18n")
-    private fun initMSDKInfoView() {
-        ToastUtils.init(this)
-        msdkInfoVm.msdkInfo.observe(this) {
-            mVersionTv.text = StringUtils.getResStr(R.string.sdk_version, it.SDKVersion + " " + it.buildVer)
-            mTextProduct.text = StringUtils.getResStr(R.string.product_information, it.productType.name)
-            //text_view_package_product_category.text = StringUtils.getResStr(R.string.package_product_category, it.packageProductCategory)
-            //text_view_is_debug.text = StringUtils.getResStr(R.string.is_sdk_debug, it.isDebug)
-            //text_core_info.text = it.coreInfo.toString()
-        }
-        model.registerState.observe(this) {
-            mTextConnectionStatus.text = model.registerState.value
-        }
-        ToastUtils.showToast(model.registerState.value.toString())
-        mBtnPair.setOnClickListener {
-            model.doPairing {
-                ToastUtils.showToast(it)
+    /**
+     * 开始配网流程
+     */
+    private fun startPairing() {
+        model.doPairing { message ->
+            runOnUiThread {
+                ToastUtils.showToast(message)
+                // 配网成功后启用打开按钮
+                mBtnOpen.isEnabled = true
             }
         }
     }
 
+    /**
+     * 初始化MSDK信息显示
+     */
+    @SuppressLint("SetTextI18n")
+    private fun initMSDKInfoView() {
+        // 初始化Toast工具
+        ToastUtils.init(this)
+        
+        // 观察MSDK信息变化
+        msdkInfoVm.msdkInfo.observe(this) { info ->
+            mVersionTv.text = StringUtils.getResStr(
+                R.string.sdk_version, 
+                "${info.SDKVersion} ${info.buildVer}"
+            )
+            mTextProduct.text = StringUtils.getResStr(
+                R.string.product_information, 
+                info.productType.name
+            )
+        }
+        
+        // 观察注册状态变化
+        model.registerState.observe(this) { state ->
+            mTextConnectionStatus.text = state
+            // 注册成功时启用打开按钮
+            if (state == getString(R.string.registration_success)) {
+                mBtnOpen.isEnabled = true
+            }
+        }
+        
+        // 显示当前注册状态
+        model.registerState.value?.let {
+            ToastUtils.showToast(it)
+        }
+    }
 
+    /**
+     * 注册DJI SDK
+     */
     private fun registerApp() {
         model.registerApp(this, object : SDKManagerCallback {
             override fun onRegisterSuccess() {
-                ToastUtils.showToast("Register Success")
-                msdkInfoVm.initListener()
-                /*handler.postDelayed({
-                    prepareUxActivity()
-                }, 5000)*/
+                runOnUiThread {
+                    ToastUtils.showToast("SDK注册成功")
+                    msdkInfoVm.initListener()
+                    // 注册成功后可以在这里添加其他初始化操作
+                }
             }
 
             override fun onRegisterFailure(error: IDJIError?) {
-                ToastUtils.showToast("Register Failure: (errorCode: ${error?.errorCode()}, description: ${error?.description()})")
+                runOnUiThread {
+                    val errorMsg = "SDK注册失败: (错误码: ${error?.errorCode()}, 描述: ${error?.description()})"
+                    ToastUtils.showToast(errorMsg)
+                    mTextConnectionStatus.text = errorMsg
+                }
             }
 
             override fun onProductDisconnect(product: Int) {
-                ToastUtils.showToast("Product: $product Disconnect")
+                runOnUiThread {
+                    val message = "设备已断开连接, 产品ID: $product"
+                    ToastUtils.showToast(message)
+                    mTextConnectionStatus.text = message
+                    mBtnOpen.isEnabled = false
+                }
             }
 
             override fun onProductConnect(product: Int) {
-                ToastUtils.showToast("Product: $product Connect")
+                runOnUiThread {
+                    val message = "设备已连接, 产品ID: $product"
+                    ToastUtils.showToast(message)
+                    mTextConnectionStatus.text = message
+                    mBtnOpen.isEnabled = true
+                }
             }
 
             override fun onProductChanged(product: Int) {
-                ToastUtils.showToast("Product: $product Changed")
+                runOnUiThread {
+                    val message = "设备已变更, 新产品ID: $product"
+                    ToastUtils.showToast(message)
+                    mTextConnectionStatus.text = message
+                }
             }
 
             override fun onInitProcess(event: DJISDKInitEvent?, totalProcess: Int) {
-                ToastUtils.showToast("Init Process event: ${event?.name}")
+                runOnUiThread {
+                    val message = "初始化进度: ${event?.name} ($totalProcess)"
+                    mTextConnectionStatus.text = message
+                }
             }
 
             override fun onDatabaseDownloadProgress(current: Long, total: Long) {
-                ToastUtils.showToast("Database Download Progress current: $current, total: $total")
+                runOnUiThread {
+                    val progress = (current * 100 / total).toInt()
+                    mTextConnectionStatus.text = "数据库下载中: $progress% ($current/$total)"
+                }
             }
         })
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        // 释放资源
         model.releaseSDKCallback()
+        handler.removeCallbacksAndMessages(null)
         ToastUtils.destroy()
     }
 
     override fun onResume() {
         super.onResume()
+        // 重新连接SDK回调
         model.releaseSDKCallback()
     }
-
-
 }

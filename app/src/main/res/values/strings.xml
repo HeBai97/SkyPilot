@@ -7,5 +7,6 @@
     <string name="model_not_available">Model Not Available</string>
     <string name="push_info">Push Info</string>
     <string name="sdk_version">DJI SDK Version: %1$s</string>
+    <string name="registration_success">registered</string>
     <string name="mapbox_access_token">pk.eyJ1IjoibW9sbmFyc3ppbGFyZCIsImEiOiJjbGR0MGE2aTUwendnM3ZwOXplb3drNWp3In0.dbL5FJWgpjXA-tMLjiFZzQ</string>
 </resources>
