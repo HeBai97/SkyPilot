@@ -20,7 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         // 启用 MultiDex（DJI SDK 需要）
-        multiDexEnabled = true
+        multiDexEnabled true
 
         ndk {
             abiFilters = ['arm64-v8a']  // MSDK 仅支持此架构
@@ -28,6 +28,9 @@ android {
 
         packagingOptions {
             pickFirst 'lib/arm64-v8a/libc++_shared.so'
+            pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+            pickFirst 'lib/x86/libc++_shared.so'
+            pickFirst 'lib/x86_64/libc++_shared.so'
 
             doNotStrip "**/libconstants.so"
             doNotStrip "**/libdji_innertools.so"
@@ -61,17 +64,17 @@ android {
 
     ndkVersion = project.ANDROID_NDK_VERSION
 
-    buildTypes {
-        debug {
-            // Debug 构建也应用 ProGuard 规则（但不混淆），确保类不被移除
-            minifyEnabled = false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        release {
-            minifyEnabled = false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
+//    buildTypes {
+//        debug {
+//            // Debug 构建也应用 ProGuard 规则（但不混淆），确保类不被移除
+//            minifyEnabled = false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//        }
+//        release {
+//            minifyEnabled = false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//        }
+//    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -91,20 +94,40 @@ dependencies {
     implementation project(":android-sdk-v5-uxsdk")
 
 
-    // DJI SDK 依赖 - 确保使用 implementation 而不是 compileOnly
-    def SDK_VERSION = rootProject.ext.SDK_VERSION
-    implementation "com.dji:dji-sdk-v5-aircraft:$SDK_VERSION"
-    compileOnly "com.dji:dji-sdk-v5-aircraft-provided:$SDK_VERSION"
+    /** <-----------------依赖MSDK--------------------> **/
+    // 修改为 implementation 确保所有类都包含在 APK 中
+    implementation deps.aircraftProvided
+    implementation deps.aircraft
 
-
+    /** <-----------------sample所需--------------------> **/
     implementation deps.appcompat
-    implementation deps.material
     implementation deps.constraintLayout
-    implementation deps.multidex  // 添加 multidex 支持（DJI SDK 可能需要）
-    implementation deps.lifecycleViewModel  // 用于 viewModelScope
-    implementation deps.lifecycleViewModelKtx
-
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation deps.aacCommon
+    implementation deps.aacRuntime
+    implementation deps.kotlinLib
+    implementation deps.ktxCore
+    implementation deps.ktxFrag
+    implementation deps.ktxNavigation
+    implementation deps.ktxNavigationUi
+    implementation deps.recyclerview
+    implementation deps.legacySupport
+    implementation deps.lifecycleViewModel
+    implementation deps.lifecycleLiveData
+    implementation deps.leakcanary
+    implementation deps.glide
+    implementation deps.dynamicanimation
+//    implementation deps.expandedit
+    implementation deps.rx3Kt
+    implementation deps.dom
+    kapt deps.glidecompiler
+    implementation deps.lynx
+    
+    // Material 3 主题
+    implementation 'com.google.android.material:material:1.11.0'
+    
+    // 确保使用兼容的 AndroidX Core 版本
+    implementation 'androidx.core:core-ktx:1.12.0'
+    
+    // MultiDex 支持
+    implementation 'androidx.multidex:multidex:2.0.1'
 }

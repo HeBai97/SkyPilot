@@ -1,10 +1,9 @@
-@file:JvmName("MaplibreUtil")
+@file:JvmName("MapboxUtil")
 
 package dji.v5.ux.mapkit.maplibre.utils
 
 import android.content.Context
 import android.graphics.Bitmap
-import androidx.core.graphics.drawable.toBitmap
 import dji.v5.ux.mapkit.core.camera.DJICameraUpdate
 import dji.v5.ux.mapkit.core.camera.DJICameraUpdateFactory
 import dji.v5.ux.mapkit.core.maps.DJIMap
@@ -12,11 +11,13 @@ import dji.v5.ux.mapkit.core.models.DJIBitmapDescriptor
 import dji.v5.ux.mapkit.core.models.DJIBitmapDescriptor.Type
 import dji.v5.ux.mapkit.core.models.DJICameraPosition
 import dji.v5.ux.mapkit.core.models.DJILatLng
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.camera.CameraUpdate
-import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.camera.CameraPosition
+import com.mapbox.mapboxsdk.camera.CameraUpdate
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory
+import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.geometry.LatLngBounds
+import com.mapbox.mapboxsdk.maps.Style
+import com.mapbox.mapboxsdk.utils.BitmapUtils
 import dji.v5.ux.mapkit.maplibre.map.MaplibreStyle
 
 private const val FEATURE_ID_PREFIX = "FEATURE_ID_PREFIX"
@@ -98,7 +99,7 @@ fun getInfoWindowLayerId(markerLayerId: String) = markerLayerId + INFO_WINDOW_ID
 fun fromDJIBitmapDescriptor(context: Context, descriptor: DJIBitmapDescriptor?): Bitmap? {
     return when (descriptor?.type) {
         Type.BITMAP -> descriptor.bitmap
-        Type.RESOURCE_ID -> android.graphics.drawable.BitmapDrawable.createFromResourceStream(context.resources, null, context.resources.openRawResource(descriptor.resourceId), null)?.toBitmap()
+        Type.RESOURCE_ID -> BitmapUtils.getBitmapFromDrawable(context.resources.getDrawable(descriptor.resourceId))
         else -> null
     }
 }

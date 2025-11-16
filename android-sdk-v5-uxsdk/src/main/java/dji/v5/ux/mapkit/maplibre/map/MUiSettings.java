@@ -1,7 +1,7 @@
 package dji.v5.ux.mapkit.maplibre.map;
 
 import dji.v5.ux.mapkit.core.maps.DJIUiSettings;
-import org.maplibre.android.maps.UiSettings;
+import com.mapbox.mapboxsdk.maps.UiSettings;
 
 /**
  * Created by joeyang on 11/3/17.

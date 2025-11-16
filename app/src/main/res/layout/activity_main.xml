@@ -11,7 +11,7 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="MSDK Integrated!\n\n点击下方按钮进入 DJI Payload 连接界面"
+        android:text="MSDK Integrated!"
         android:textAlignment="center"
         android:gravity="center"
         app:layout_constraintBottom_toTopOf="@+id/btnGoToPayload"

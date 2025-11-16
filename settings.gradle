@@ -12,11 +12,9 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        maven { url "https://repo.dji.com" }
-        mavenCentral()
         google()
+        mavenCentral()
     }
 }
 rootProject.name = "SkyPilot"

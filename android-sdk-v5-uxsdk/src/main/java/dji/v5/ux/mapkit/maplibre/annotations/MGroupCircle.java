@@ -5,20 +5,20 @@ import dji.v5.ux.mapkit.core.models.annotations.DJIGroupCircle;
 import dji.v5.ux.mapkit.core.models.annotations.DJIGroupCircleOptions;
 import dji.v5.ux.mapkit.maplibre.map.MaplibreMapDelegate;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import org.maplibre.geojson.Feature;
-import org.maplibre.geojson.FeatureCollection;
-import org.maplibre.geojson.Point;
-import org.maplibre.geojson.Polygon;
-import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.style.layers.FillLayer;
-import org.maplibre.android.style.layers.PropertyFactory;
-import org.maplibre.android.style.sources.GeoJsonSource;
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.Point;
+import com.mapbox.geojson.Polygon;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.maplibre.android.style.layers.Property.NONE;
-import static org.maplibre.android.style.layers.Property.VISIBLE;
+import static com.mapbox.mapboxsdk.style.layers.Property.NONE;
+import static com.mapbox.mapboxsdk.style.layers.Property.VISIBLE;
 
 /**
  * Created by dickensdai 10/9/18
@@ -26,7 +26,7 @@ import static org.maplibre.android.style.layers.Property.VISIBLE;
  */
 public class MGroupCircle implements DJIGroupCircle {
 
-    private MapLibreMap mapLibreMap;
+    private MapboxMap mapboxMap;
     private FillLayer groupCircleLayer;
     private GeoJsonSource source;
     private MaplibreMapDelegate maplibreMapDelegate;
@@ -42,12 +42,12 @@ public class MGroupCircle implements DJIGroupCircle {
     }
 
     public MGroupCircle(MaplibreMapDelegate maplibreMapDelegate,
-                        MapLibreMap mapLibreMap,
+                        MapboxMap mapboxMap,
                         FillLayer groupCircleLayer,
                         GeoJsonSource source,
                         DJIGroupCircleOptions options) {
         this.maplibreMapDelegate = maplibreMapDelegate;
-        this.mapLibreMap = mapLibreMap;
+        this.mapboxMap = mapboxMap;
         this.groupCircleLayer = groupCircleLayer;
         this.source = source;
         this.sourceId = source.getId();
@@ -59,7 +59,7 @@ public class MGroupCircle implements DJIGroupCircle {
         source = new GeoJsonSource(sourceId);
         setCircles(options.getCenters(), options.getRadius());
 
-        mapLibreMap.getStyle().addSource(source);
+        mapboxMap.getStyle().addSource(source);
         groupCircleLayer = new FillLayer(layerId, sourceId);
 
         maplibreMapDelegate.updateLayerByZIndex((int) options.getZIndex(), groupCircleLayer);

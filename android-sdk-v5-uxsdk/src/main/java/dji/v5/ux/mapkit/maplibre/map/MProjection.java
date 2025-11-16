@@ -6,9 +6,8 @@ import android.graphics.PointF;
 import dji.v5.ux.mapkit.core.maps.DJIProjection;
 import dji.v5.ux.mapkit.core.models.DJILatLng;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
-import org.maplibre.android.geometry.LatLng;
-import org.maplibre.android.maps.Projection;
-
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.Projection;
 
 /**
  * Created by joeyang on 11/3/17.

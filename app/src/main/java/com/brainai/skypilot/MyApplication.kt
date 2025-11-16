@@ -2,117 +2,123 @@ package com.brainai.skypilot
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.multidex.MultiDex
 import dji.v5.common.error.IDJIError
 import dji.v5.common.register.DJISDKInitEvent
 import dji.v5.manager.SDKManager
 import dji.v5.manager.interfaces.SDKManagerCallback
+import dji.v5.network.DJINetworkManager
+import com.brainai.skypilot.util.ToastUtils
+
 
 class MyApplication : Application() {
 
-    private val TAG = "MyApplication"
+    companion object {
+        private val lvRegisterState = MutableLiveData<Pair<Boolean, IDJIError?>>()
+        private val lvProductConnectionState = MutableLiveData<Pair<Boolean, Int>>()
+        private val lvProductChanges = MutableLiveData<Int>()
+        private val lvInitProcess = MutableLiveData<Pair<DJISDKInitEvent, Int>>()
+        private val lvDBDownloadProgress = MutableLiveData<Pair<Long, Long>>()
+        private var isInit = false
+        
+        fun getRegisterState(): LiveData<Pair<Boolean, IDJIError?>> = lvRegisterState
+        fun getProductConnectionState(): LiveData<Pair<Boolean, Int>> = lvProductConnectionState
+        fun getProductChanges(): LiveData<Int> = lvProductChanges
+        fun getInitProcess(): LiveData<Pair<DJISDKInitEvent, Int>> = lvInitProcess
+        fun getDBDownloadProgress(): LiveData<Pair<Long, Long>> = lvDBDownloadProgress
+    }
 
-    override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base ?: this)
-        // 启用 MultiDex 支持（DJI SDK 可能需要）
-        try {
-            MultiDex.install(this)
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to install MultiDex", e)
-        }
-        // 注意：加固包类名可能因版本而异！
-        // 如果报错找不到 com.cySdkyc.clx.Helper，请查看 MSDK Sample 中实际使用的类名
-        try {
-            val helperClass = Class.forName("com.cySdkyc.clx.Helper")
-            val installMethod = helperClass.getMethod("install", Context::class.java)
-            installMethod.invoke(null, base ?: this)
-            Log.d(TAG, "Helper installed successfully")
-        } catch (e: ClassNotFoundException) {
-            Log.w(TAG, "Helper class not found, skipping (this is OK if not using obfuscated SDK)", e)
-        } catch (e: NoSuchMethodException) {
-            Log.w(TAG, "Helper.install method not found, trying alternative method", e)
-            // 尝试其他可能的方法签名
-            try {
-                val helperClass = Class.forName("com.cySdkyc.clx.Helper")
-                val methods = helperClass.declaredMethods
-                for (method in methods) {
-                    if (method.name == "install" && method.parameterTypes.size == 1) {
-                        method.isAccessible = true
-                        method.invoke(null, base ?: this)
-                        Log.d(TAG, "Helper installed using alternative method")
-                        return
-                    }
-                }
-            } catch (e2: Exception) {
-                Log.w(TAG, "Failed to find alternative install method", e2)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to install Helper, but continuing (this is OK if not using obfuscated SDK)", e)
-            // 不抛出异常，允许应用继续启动
-        }
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
     }
 
     override fun onCreate() {
         super.onCreate()
-        
-        // 检查SDK类是否存在
-        try {
-            Class.forName("dji.v5.manager.SDKManager")
-        } catch (e: ClassNotFoundException) {
-            Log.e(TAG, "DJI SDK classes not found! Please check dependencies.", e)
-            Log.e(TAG, "Make sure 'com.dji:dji-sdk-v5-aircraft' is properly added to build.gradle")
-            // 不抛出异常，允许应用继续运行（但SDK功能将不可用）
+        ToastUtils.initialize(this)
+
+        // 在主线程延迟初始化
+        Handler(Looper.getMainLooper()).postDelayed({
+            initMobileSDK()
+        }, 3000) // 延迟 3 秒
+    }
+
+    private fun initMobileSDK() {
+        // 确保在主线程执行
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            Handler(Looper.getMainLooper()).post {
+                doInitMobileSDK()
+            }
             return
         }
-        
-        // 初始化DJI SDK
+        doInitMobileSDK()
+    }
+
+    private fun doInitMobileSDK() {
         try {
+            android.util.Log.d("DJI_SDK", "Starting DJI SDK initialization on main thread...")
+
             SDKManager.getInstance().init(this, object : SDKManagerCallback {
-                override fun onInitProcess(event: DJISDKInitEvent?, totalProcess: Int) {
-                    Log.d(TAG, "SDK Init Process: $event, Progress: $totalProcess")
-                    if (event == DJISDKInitEvent.INITIALIZE_COMPLETE) {
-                        try {
-                            SDKManager.getInstance().registerApp()
-                            Log.d(TAG, "SDK initialization complete, registering app...")
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Failed to register app", e)
-                        }
-                    }
-                }
-
                 override fun onRegisterSuccess() {
-                    Log.i(TAG, "DJI SDK Registered Successfully")
+                    android.util.Log.d("DJI_SDK", "DJI SDK registered successfully")
+                    lvRegisterState.postValue(Pair(true, null))
                 }
 
-                override fun onRegisterFailure(error: IDJIError?) {
-                    Log.e(TAG, "DJI SDK Register Failed: ${error?.description()}")
-                    // 不抛出异常，允许应用继续运行
-                }
-
-                override fun onProductConnect(productId: Int) {
-                    Log.i(TAG, "Product Connected: $productId")
+                override fun onRegisterFailure(error: IDJIError) {
+                    android.util.Log.e("DJI_SDK", "DJI SDK registration failed: ${error.description()}")
+                    lvRegisterState.postValue(Pair(false, error))
                 }
 
                 override fun onProductDisconnect(productId: Int) {
-                    Log.i(TAG, "Product Disconnected: $productId")
+                    lvProductConnectionState.postValue(Pair(false, productId))
+                }
+
+                override fun onProductConnect(productId: Int) {
+                    lvProductConnectionState.postValue(Pair(true, productId))
                 }
 
                 override fun onProductChanged(productId: Int) {
-                    Log.i(TAG, "Product Changed: $productId")
+                    lvProductChanges.postValue(productId)
+                }
+
+                override fun onInitProcess(event: DJISDKInitEvent, totalProcess: Int) {
+                    android.util.Log.d("DJI_SDK", "DJI SDK init process: $event, $totalProcess")
+                    lvInitProcess.postValue(Pair(event, totalProcess))
+                    if (event == DJISDKInitEvent.INITIALIZE_COMPLETE) {
+                        isInit = true
+                        SDKManager.getInstance().registerApp()
+                    }
                 }
 
                 override fun onDatabaseDownloadProgress(current: Long, total: Long) {
-                    Log.d(TAG, "DB Download: $current / $total")
+                    lvDBDownloadProgress.postValue(Pair(current, total))
                 }
             })
-        } catch (e: NoClassDefFoundError) {
-            Log.e(TAG, "DJI SDK classes not found at runtime! Check ProGuard rules and dependencies.", e)
-            // 不抛出异常，允许应用继续运行
+
+            DJINetworkManager.getInstance().addNetworkStatusListener { isAvailable ->
+                if (isInit && isAvailable && !SDKManager.getInstance().isRegistered) {
+                    SDKManager.getInstance().registerApp()
+                }
+            }
+
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize DJI SDK", e)
-            // 不抛出异常，允许应用继续运行
+            android.util.Log.e("DJI_SDK", "DJI SDK initialization failed", e)
+            e.printStackTrace()
         }
     }
-}
 
+    fun destroyMobileSDK() {
+        SDKManager.getInstance().destroy()
+    }
+    
+    // Add public getter methods
+    fun getRegisterState(): LiveData<Pair<Boolean, IDJIError?>> = lvRegisterState
+    fun getProductConnectionState(): LiveData<Pair<Boolean, Int>> = lvProductConnectionState
+    fun getProductChanges(): LiveData<Int> = lvProductChanges
+    fun getInitProcess(): LiveData<Pair<DJISDKInitEvent, Int>> = lvInitProcess
+    fun getDBDownloadProgress(): LiveData<Pair<Long, Long>> = lvDBDownloadProgress
+}

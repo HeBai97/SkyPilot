@@ -10,20 +10,20 @@ import dji.v5.ux.mapkit.core.models.annotations.DJICircleOptions;
 import dji.v5.ux.mapkit.maplibre.map.MaplibreMapDelegate;
 import dji.v5.ux.mapkit.maplibre.utils.MaplibreUtils;
 
-import org.maplibre.geojson.Point;
-import org.maplibre.geojson.Polygon;
-import org.maplibre.android.geometry.LatLng;
-import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.style.layers.FillLayer;
-import org.maplibre.android.style.layers.PropertyFactory;
-import org.maplibre.android.style.sources.GeoJsonSource;
-import org.maplibre.android.annotations.Polyline;
-import org.maplibre.android.annotations.PolylineOptions;
+import com.mapbox.geojson.Point;
+import com.mapbox.geojson.Polygon;
+import com.mapbox.mapboxsdk.annotations.Polyline;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.util.ArrayList;
 
-import static org.maplibre.android.style.layers.Property.NONE;
-import static org.maplibre.android.style.layers.Property.VISIBLE;
+import static com.mapbox.mapboxsdk.style.layers.Property.NONE;
+import static com.mapbox.mapboxsdk.style.layers.Property.VISIBLE;
 
 /**
  * Created by joeyang on 11/3/17.
@@ -32,7 +32,7 @@ public class MCircle implements DJICircle {
 
     private static final float NO_ALPHA = 0.0F;
 
-    private MapLibreMap mapLibreMap;
+    private MapboxMap mapboxMap;
     private FillLayer singleCircleLayer;
     private GeoJsonSource source;
     private MaplibreMapDelegate maplibreMapDelegate;
@@ -45,12 +45,12 @@ public class MCircle implements DJICircle {
 
 
     public MCircle(MaplibreMapDelegate maplibreMapDelegate,
-                   MapLibreMap mapLibreMap,
+                   MapboxMap mapboxMap,
                    FillLayer singleCircleLayer,
                    GeoJsonSource source,
                    DJICircleOptions options) {
         this.maplibreMapDelegate = maplibreMapDelegate;
-        this.mapLibreMap = mapLibreMap;
+        this.mapboxMap = mapboxMap;
         this.singleCircleLayer = singleCircleLayer;
         this.source = source;
         this.sourceId = source.getId();
@@ -70,7 +70,7 @@ public class MCircle implements DJICircle {
         source = new GeoJsonSource(sourceId);
         setCircle(options.getCenter(), options.getRadius());
 
-        mapLibreMap.getStyle().addSource(source);
+        mapboxMap.getStyle().addSource(source);
         singleCircleLayer = new FillLayer(layerId, sourceId);
 
         setFillColor(options.getFillColor());
@@ -82,7 +82,7 @@ public class MCircle implements DJICircle {
     public void remove() {
         maplibreMapDelegate.onSingleCircleRemove(this);
         if (border != null) {
-            mapLibreMap.removePolyline(border);
+            mapboxMap.removePolyline(border);
         }
     }
 
@@ -112,7 +112,7 @@ public class MCircle implements DJICircle {
                 .color(options.getStrokeColor())
                 .width(options.getStrokeWidth() / 5f);
         borderAlpha = polylineOptions.getAlpha();
-        border = mapLibreMap.addPolyline(polylineOptions);
+        border = mapboxMap.addPolyline(polylineOptions);
 
     }
 

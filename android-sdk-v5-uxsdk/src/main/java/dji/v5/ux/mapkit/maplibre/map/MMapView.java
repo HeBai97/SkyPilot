@@ -7,11 +7,11 @@ import androidx.annotation.Nullable;
 import dji.v5.ux.mapkit.core.maps.DJIMapView;
 import dji.v5.ux.mapkit.core.maps.DJIMapViewInternal;
 
-import org.maplibre.android.maps.MapView;
-import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.maps.MapLibreMapOptions;
-import org.maplibre.android.maps.OnMapReadyCallback;
-import org.maplibre.android.maps.Style;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.MapboxMapOptions;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
 
 /**
  * Created by joeyang on 11/3/17.
@@ -22,7 +22,7 @@ public class MMapView extends MapView implements DJIMapViewInternal {
         super(context);
     }
 
-    public MMapView(@NonNull Context context, @Nullable MapLibreMapOptions options) {
+    public MMapView(@NonNull Context context, @Nullable MapboxMapOptions options) {
         super(context, options);
     }
 
