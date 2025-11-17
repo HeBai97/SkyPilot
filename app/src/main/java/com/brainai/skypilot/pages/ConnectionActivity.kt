@@ -153,10 +153,20 @@ class ConnectionActivity : AppCompatActivity() {
                 R.string.sdk_version, 
                 "${info.SDKVersion} ${info.buildVer}"
             )
-            mTextProduct.text = StringUtils.getResStr(
-                R.string.product_information, 
+            
+            // 更新产品信息显示
+            val productTypeName = if (info.productType != dji.sdk.keyvalue.value.product.ProductType.UNKNOWN) {
                 info.productType.name
-            )
+            } else {
+                getString(R.string.model_not_available)
+            }
+            
+            // 显示产品信息：Product Information: [产品类型]
+            mTextProduct.text = "${getString(R.string.product_information)}: $productTypeName"
+            
+            // 更新型号可用性显示
+            mTextModelAvailable.text = productTypeName
+            mTextModelAvailable.visibility = android.view.View.VISIBLE
         }
         
         // 观察注册状态变化
@@ -247,7 +257,7 @@ class ConnectionActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 重新连接SDK回调
-        model.releaseSDKCallback()
+        // onResume 时不需要释放资源，SDK 应该保持初始化状态
+        // 如果需要重新初始化，应该调用 registerApp()，而不是 releaseSDKCallback()
     }
 }

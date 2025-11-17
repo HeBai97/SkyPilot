@@ -133,6 +133,7 @@ class MSDKInfoViewModel : ViewModel() {
             FlightControllerKey.KeyConnection.create().listen(this) { isConnected ->
                 LogUtils.i(tag, "飞行控制器连接状态: $isConnected")
                 if (isConnected == true) {
+                    updateProductType()
                     updateFirmwareVersion()
                 }
             }
@@ -151,6 +152,9 @@ class MSDKInfoViewModel : ViewModel() {
                     refreshMSDKInfo()
                 }
             }
+
+            // 主动获取当前产品类型（如果设备已连接）
+            updateProductType()
 
             LogUtils.i(tag, "MSDK信息监听器初始化完成")
         } catch (e: Exception) {
@@ -201,6 +205,25 @@ class MSDKInfoViewModel : ViewModel() {
             }
         }
         */
+    }
+
+    /**
+     * 更新产品类型信息
+     */
+    private fun updateProductType() {
+        ProductKey.KeyProductType.create().get(
+            onSuccess = { productType ->
+                LogUtils.i(tag, "产品类型获取成功: $productType")
+                productType?.let {
+                    msdkInfo.value?.productType = it
+                    refreshMSDKInfo()
+                }
+            },
+            onFailure = { error ->
+                LogUtils.e(tag, "获取产品类型失败: $error")
+                // 如果获取失败，保持当前值不变
+            }
+        )
     }
 
     /**

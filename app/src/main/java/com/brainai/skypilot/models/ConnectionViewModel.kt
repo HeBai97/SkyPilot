@@ -87,11 +87,32 @@ class ConnectionViewModel(application: Application) : AndroidViewModel(applicati
 
     /**
      * 释放SDK回调
+     * 安全地释放SDK资源，处理可能出现的异常
      */
     fun releaseSDKCallback() {
         try {
-            SDKManager.getInstance().destroy()
-            Log.d(TAG, "已释放SDK资源")
+            // 检查 SDK 是否已初始化
+            val sdkManager = SDKManager.getInstance()
+            if (sdkManager.isRegistered) {
+                try {
+                    sdkManager.destroy()
+                    Log.d(TAG, "已释放SDK资源")
+                } catch (e: IllegalArgumentException) {
+                    // 处理 Receiver not registered 异常
+                    // 这通常发生在Receiver已经被释放或从未注册的情况下
+                    if (e.message?.contains("Receiver not registered") == true) {
+                        Log.w(TAG, "释放SDK资源时出现异常（Receiver未注册或已释放）: ${e.message}")
+                    } else {
+                        // 其他类型的IllegalArgumentException，重新抛出
+                        throw e
+                    }
+                }
+            } else {
+                Log.d(TAG, "SDK未初始化，无需释放资源")
+            }
+        } catch (e: IllegalArgumentException) {
+            // 处理 Receiver not registered 异常
+            Log.w(TAG, "释放SDK资源时出现异常（可能是Receiver未注册）: ${e.message}")
         } catch (e: Exception) {
             Log.e(TAG, "释放SDK资源时出错", e)
         }
