@@ -127,13 +127,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
-## 支持
-
-如有任何问题，请联系：
-- 邮箱：support@brainai.com
-- GitHub Issues: [提交 Issue](https://github.com/yourusername/SkyPilot/issues)
-
----
-
-*最后更新: 2025年11月17日*
